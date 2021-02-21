@@ -2,8 +2,8 @@
 
 let
   inherit (pkgs) lorri;
-  appenv = import "/Users/apan/dev/appenv/" { }; in
-{
+  #appenv = import "/Users/apan/dev/appenv/" { };
+in {
   
   nixpkgs.config.packageOverrides = pkgs: {
     nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
@@ -16,14 +16,14 @@ let
   environment.systemPackages =
     [
       pkgs.fish
-      appenv
+#      appenv
       lorri
       pkgs.curl
 #    pkgs.nur.repos.mic92.frida-tools
     ];
-  system.activationScripts.postUserActivation.text = ''
-  launchctl setenv DYLD_INSERT_LIBRARIES ${appenv}/lib/libappenv.dylib
-  '';
+#  system.activationScripts.postUserActivation.text = ''
+#  launchctl setenv DYLD_INSERT_LIBRARIES ${appenv}/lib/libappenv.dylib
+#  '';
 
   launchd.user.agents = {
     "lorri" = {
