@@ -36,7 +36,7 @@
     pname = "git-credential-keepassxc";
     version = "0.4.3";
 
-    buildInputs = [ prev.darwin.apple_sdk.frameworks.IOKit ];
+    buildInputs = prev.lib.optionals (prev.targetPlatform.isDarwin) [ prev.darwin.apple_sdk.frameworks.IOKit ];
     src = prev.fetchFromGitHub {
       owner = "Frederick888";
       repo = pname;
