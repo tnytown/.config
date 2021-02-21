@@ -16,64 +16,55 @@ in {
   home.stateVersion = "21.03";
 
   nixpkgs.config.allowUnfree = true;
-  home.packages = 
-    let discord = 
-          pkgs.discord.overrideAttrs(_: rec {
-            version = "0.0.13";
-            src = pkgs.fetchurl {
-              url = "https://dl.discordapp.net/apps/linux/${version}/discord-${version}.tar.gz";
-              sha256 = "0d5z6cbj9dg3hjw84pyg75f8dwdvi2mqxb9ic8dfqzk064ssiv7y";
-            };
-          });
-    in [
-      pkgs.zsh pkgs.neofetch pkgs.htop pkgs.tectonic
+  home.packages = [
+    pkgs.zsh pkgs.neofetch pkgs.htop pkgs.tectonic
 
-      pkgs.direnv
+    pkgs.direnv
 
-      upkgs.just
-      pkgs.git-credential-keepassxc
-      pkgs.rust-analyzer
+    upkgs.just
+    pkgs.git-credential-keepassxc
+    pkgs.rust-analyzer
 
-      pkgs.file
-      pkgs.binutils
-      pkgs.jq
-      pkgs.ripgrep
-      # pkgs.openrgb
+    pkgs.file
+    pkgs.binutils
+    pkgs.jq
+    pkgs.ripgrep
+    # pkgs.openrgb
 
-      upkgs.python3Packages.binwalk
-    ] ++ (if pkgs.stdenv.isLinux then [
-      pkgs.rnnoise-plugin
-      
-      pkgs.multimc
-      upkgs.steam
+    upkgs.python3Packages.binwalk
+  ] ++ (if pkgs.stdenv.isLinux then [
+    pkgs.rnnoise-plugin
+    
+    pkgs.multimc
+    upkgs.steam
 
-      pkgs.gnome3.gnome-shell-extensions
-      pkgs.nordic
-      upkgs.openrgb
-      pkgs.pavucontrol
-      pkgs.keepassxc
-      pkgs.emacs
-      pkgs.spotify
-      pkgs.slack
-      discord
-      pkgs.ppsspp
-      pkgs.zoom-us
-      pkgs.chromium
-      pkgs.mpv
-      pkgs.lutris
-      pkgs.slic3r-prusa3d
-      pkgs.openscad
-      pkgs.obs-studio
-      pkgs.shotcut
-      pkgs.qjackctl
-      pkgs.jalv
-      pkgs.lilv
-      pkgs.xsel
-      pkgs.cntr
+    pkgs.gnome3.gnome-shell-extensions
+    pkgs.nordic
+    upkgs.openrgb
+    pkgs.pavucontrol
+    pkgs.keepassxc
+    pkgs.emacs
+    pkgs.spotify
+    pkgs.slack
+    pkgs.discord
+    pkgs.ppsspp
+    pkgs.zoom-us
+    pkgs.chromium
+    pkgs.mpv
+    pkgs.lutris
+    pkgs.slic3r-prusa3d
+    pkgs.openscad
+    pkgs.obs-studio
+    pkgs.shotcut
+    pkgs.qjackctl
+    pkgs.jalv
+    pkgs.lilv
+    pkgs.xsel
+    pkgs.cntr
 
-      pkgs.flashrom
-      pkgs.libbde
-    ] else []);
+    pkgs.flashrom
+    pkgs.libbde
+  ] else []);
 
   systemd.user.services = pkgs.lib.mkIf pkgs.hostPlatform.isLinux {
     # rnnoise-plugin
