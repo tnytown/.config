@@ -64,4 +64,7 @@ in {
   # $ sysctl -n hw.ncpu
   nix.maxJobs = 12;
   nix.buildCores = 12;
+
+  # allow nix-darwin to manage build users
+  users.nix.configureBuildUsers = true;
 }
