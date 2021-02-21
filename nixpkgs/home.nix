@@ -1,51 +1,6 @@
 { config, pkgs, ... }:
 
-
-# let pkgs = { inherit pkgs; pkgs.config.allowUnfree = true; }; in
-let
-  upkgs = pkgs.unstable;
-    ujust = upkgs.just.overrideAttrs(o: rec {
-      version = "0.8.3";
-      src = pkgs.fetchFromGitHub {
-        owner = "casey";
-        repo = o.pname;
-        rev = "v${version}";
-        sha256 = "19hlmm9bal1lgagzxgrgs9c6z6mrqfzffr8337hin71yhiazc7p0";
-      };
-
-      # https://discourse.nixos.org/t/is-it-possible-to-override-cargosha256-in-buildrustpackage/4393/4
-      cargoDeps = o.cargoDeps.overrideAttrs(_: {
-        inherit src;
-        name = "just-${version}-vendor.tar.gz";
-        outputHash = "1773gzr6yl0m1c2fx8cwd3zx2467qdmg7vnlykw82jlg2l6skqxq";
-      });
-
-      # disable testing
-      doCheck = false;
-    });
-    git-credential-keepassxc = pkgs.rustPlatform.buildRustPackage rec {
-      pname = "git-credential-keepassxc";
-      version = "0.4.3";
-
-      src = pkgs.fetchFromGitHub {
-        owner = "Frederick888";
-        repo = pname;
-        rev = "v${version}";
-        sha256 = "1kzq6mnffxfsh1q43c99aq2mgm60jp47cs389vg8qpd1cqh15nj0";
-      };
-
-      cargoSha256 = "1ghag2v6nsf7qnh0i2mjzm0hkij65i7mnbb297mdsprc6i8mn3xn";
-
-      meta = with pkgs.stdenv.lib; {
-        description = "Helper that allows Git (and shell scripts) to use KeePassXC as credential store";
-        homepage = "https://github.com/Frederick888/git-credential-keepassxc";
-        license = licenses.gpl3Only;
-        maintainers = [ "tny" ];
-      };
-
-      doCheck = false;
-    };
-
+let upkgs = pkgs.unstable;
 in {
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
@@ -71,21 +26,21 @@ in {
             };
           });
     in [
-      pkgs.zsh pkgs.neofetch pkgs.htop pkgs.texlive.combined.scheme-full
+      pkgs.zsh pkgs.neofetch pkgs.htop pkgs.tectonic
 
       pkgs.direnv
-      git-credential-keepassxc
-      ujust
+
+      upkgs.just
+      pkgs.git-credential-keepassxc
       pkgs.rust-analyzer
 
       pkgs.file
-      pkgs.python3Packages.binwalk
       pkgs.binutils
       pkgs.jq
       pkgs.ripgrep
       # pkgs.openrgb
 
-
+      upkgs.python3Packages.binwalk
     ] ++ (if pkgs.stdenv.isLinux then [
       pkgs.rnnoise-plugin
       
@@ -120,7 +75,7 @@ in {
       pkgs.libbde
     ] else []);
 
-  systemd.user.services = pkgs.lib.mkIf pkgs.stdenv.isLinux {
+  systemd.user.services = pkgs.lib.mkIf pkgs.hostPlatform.isLinux {
     # rnnoise-plugin
     rnnoise = {
       Unit = {
@@ -188,7 +143,7 @@ wait
     userEmail = "known@unown.me";
     
     extraConfig = {
-      credential.helper = "${git-credential-keepassxc}/bin/git-credential-keepassxc";
+      credential.helper = "${pkgs.git-credential-keepassxc}/bin/git-credential-keepassxc";
       core.excludesFile = (pkgs.writeText ".gitignore" ''
 # Emacs
 *~
@@ -206,14 +161,16 @@ wait
 #
 #'';
 
+
   
-  gtk.enable = true;
+  gtk.enable = pkgs.hostPlatform.isLinux;
   gtk.theme.name = "Nordic";
-  dconf.settings."org/gnome/desktop/wm/preferences" = {
-    theme = "Nordic";
+  dconf.settings = pkgs.lib.mkIf pkgs.hostPlatform.isLinux {
+    "org/gnome/desktop/wm/preferences" =  {
+      theme = "Nordic";
+    };
+    "org/gnome/shell/extensions/user-theme" = {
+      name = "Nordic";
+    };
   };
-  dconf.settings."org/gnome/shell/extensions/user-theme" = {
-    name = "Nordic";
-  };
-  # dconf.settings."org/gnome/shell"
 }

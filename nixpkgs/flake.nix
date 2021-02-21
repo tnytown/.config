@@ -16,9 +16,18 @@
   # https://github.com/nix-community/home-manager/issues/1538#issuecomment-706627100
   outputs = inputs@{ self, nixpkgs, unstable, darwin, home-manager }:
     let lib = (import inputs.nixpkgs { system = "x86_64-linux"; }).lib;
+        registry = {
+          # Pin flake versions for use with nix shell.
+          nix.registry = {
+            nixpkgs.flake = nixpkgs;
+            unstable.flake = unstable;
+            s.flake = nixpkgs;
+            u.flake = unstable;
+          };
+        };
     in rec {
     overlays = [
-      (final: prev: {
+      (final: prev: rec {
         # overlay unstable into our stable nixpkgs set.
         unstable = import inputs.unstable {
           system = final.system;
@@ -35,7 +44,7 @@
       home-manager.lib.homeManagerConfiguration {
         inherit system homeDirectory username;
         configuration = {
-          nixpkgs.overlays = self.overlays;
+          nixpkgs.overlays = overlays;
           imports = [ ./home.nix ];
         };
       };
@@ -56,22 +65,15 @@
             inherit system;
 
             modules = [
-              {
-                # Pin flake versions for use with nix shell.
-                nix.registry = {
-                  nixpkgs.flake = nixpkgs;
-                  unstable.flake = unstable;
-                  s.flake = nixpkgs;
-                  u.flake = unstable;
-                };
-              }
-
+              registry
               # use unstable PipeWire module.
               (mkModule "${unstable}/nixos/modules/services/desktops/pipewire/pipewire.nix")
               (mkModule "${unstable}/nixos/modules/services/desktops/pipewire/pipewire-media-session.nix")
 
               # navi uses unstable for nvidia stuff.
-              ./configuration.nix { nixpkgs.overlays = self.overlays; }
+              { nixpkgs.overlays = self.overlays; }
+
+              ./configuration.nix
             ];
         };
 
@@ -86,6 +88,7 @@
 
         config = darwin.lib.darwinSystem {
           modules = [
+            registry
             ./darwin-configuration.nix
           ];
         };

@@ -1,4 +1,4 @@
-(final: prev: {
+(final: prev: let uprev = prev.unstable; in {
   flashrom = prev.flashrom.overrideAttrs(o: {
     version = "git";
     nativeBuildInputs = o.nativeBuildInputs ++ [ prev.git prev.cmocka ];
@@ -10,6 +10,7 @@
       sha256 = "sha256-C7LcZwZtzg4BEzwzcn/O6Dj8fss2/KGIQMfoH6ewhqw=";
     };
   });
+
   rnnoise-plugin = prev.rnnoise-plugin.overrideAttrs(o: {
     version = "e391a9b";
     src = prev.fetchFromGitHub {
@@ -19,6 +20,7 @@
       sha256 = "sha256-OvJyJrUdnT4M/3iBELzzArIeiUVb+nJu+8sIsspOxkQ=";
     };
   });
+
   libbde = prev.stdenv.mkDerivation {
     pname = "libbde";
     version = "alpha-20200724";
@@ -28,5 +30,29 @@
       url = "https://github.com/libyal/libbde/releases/download/20200724/libbde-alpha-20200724.tar.gz";
       sha256 = "1qh3m3f8jb53p9241v53ws0if2874v90fadjs86lm8fgba0zfaak";
     };
+  };
+
+  git-credential-keepassxc = let prev = final.unstable; in prev.rustPlatform.buildRustPackage rec {
+    pname = "git-credential-keepassxc";
+    version = "0.4.3";
+
+    buildInputs = [ prev.darwin.apple_sdk.frameworks.IOKit ];
+    src = prev.fetchFromGitHub {
+      owner = "Frederick888";
+      repo = pname;
+      rev = "v${version}";
+      sha256 = "1kzq6mnffxfsh1q43c99aq2mgm60jp47cs389vg8qpd1cqh15nj0";
+    };
+
+    cargoSha256 = "1ghag2v6nsf7qnh0i2mjzm0hkij65i7mnbb297mdsprc6i8mn3xn";
+
+    meta = with prev.stdenv.lib; {
+      description = "Helper that allows Git (and shell scripts) to use KeePassXC as credential store";
+      homepage = "https://github.com/Frederick888/git-credential-keepassxc";
+      license = licenses.gpl3Only;
+      maintainers = [ "tny" ];
+    };
+
+    doCheck = false;
   };
 })
