@@ -71,60 +71,56 @@ in {
             };
           });
     in [
-      pkgs.fish pkgs.zsh pkgs.emacs pkgs.neofetch pkgs.htop pkgs.texlive.combined.scheme-full
+      pkgs.zsh pkgs.neofetch pkgs.htop pkgs.texlive.combined.scheme-full
 
-         pkgs.multimc
-         upkgs.steam
-         pkgs.pavucontrol
+      pkgs.direnv
+      git-credential-keepassxc
+      ujust
+      pkgs.rust-analyzer
 
-         pkgs.syncthing
-         pkgs.keepassxc
-
-         pkgs.gnome3.gnome-shell-extensions
-         pkgs.nordic
-         upkgs.openrgb
-         
-         pkgs.spotify
-         pkgs.slack
-         discord
-         pkgs.zoom-us
-         
-         pkgs.chromium
-         pkgs.mpv
-         pkgs.lutris
-
-         pkgs.direnv
-         git-credential-keepassxc
-         ujust
-         pkgs.cntr
-         pkgs.rust-analyzer
-
-         pkgs.flashrom
-
-         pkgs.file
-         pkgs.python3Packages.binwalk
-         pkgs.binutils
-         pkgs.jq
+      pkgs.file
+      pkgs.python3Packages.binwalk
+      pkgs.binutils
+      pkgs.jq
       pkgs.ripgrep
-         # pkgs.openrgb
-         pkgs.ppsspp
+      # pkgs.openrgb
 
-         pkgs.qjackctl
-         pkgs.jalv
-         pkgs.lilv
-         pkgs.rnnoise-plugin
 
-         pkgs.libbde
+    ] ++ (if pkgs.stdenv.isLinux then [
+      pkgs.rnnoise-plugin
+      
+      pkgs.multimc
+      upkgs.steam
 
-         pkgs.slic3r-prusa3d
-         pkgs.openscad
-
-         pkgs.obs-studio
-         pkgs.shotcut
+      pkgs.gnome3.gnome-shell-extensions
+      pkgs.nordic
+      upkgs.openrgb
+      pkgs.pavucontrol
+      pkgs.keepassxc
+      pkgs.emacs
+      pkgs.spotify
+      pkgs.slack
+      discord
+      pkgs.ppsspp
+      pkgs.zoom-us
+      pkgs.chromium
+      pkgs.mpv
+      pkgs.lutris
+      pkgs.slic3r-prusa3d
+      pkgs.openscad
+      pkgs.obs-studio
+      pkgs.shotcut
+      pkgs.qjackctl
+      pkgs.jalv
+      pkgs.lilv
       pkgs.xsel
-       ];
+      pkgs.cntr
 
-  systemd.user.services = {
+      pkgs.flashrom
+      pkgs.libbde
+    ] else []);
+
+  systemd.user.services = pkgs.lib.mkIf pkgs.stdenv.isLinux {
     # rnnoise-plugin
     rnnoise = {
       Unit = {
@@ -177,7 +173,7 @@ wait
     };
   };
 
-  services.syncthing.enable = true;
+  services.syncthing.enable = pkgs.hostPlatform.isLinux;
   
   #home.sessionVariables = [];
   programs.bash.enable = true;

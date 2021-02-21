@@ -6,6 +6,7 @@
     unstable.url = "nixpkgs/nixpkgs-unstable";
     nixpkgs.url = "nixpkgs/release-20.09";
     darwin.url = "github:lnl7/nix-darwin/master";
+    darwin.inputs.nixpkgs.follows = "nixpkgs";
 
     home-manager.url = "github:nix-community/home-manager/release-20.09";
   };
@@ -13,7 +14,8 @@
   # Cargo culted.
   # https://github.com/nix-community/home-manager/issues/1538#issuecomment-706627100
   outputs = inputs@{ self, nixpkgs, unstable, darwin, home-manager }:
-    rec {
+    let lib = (import inputs.nixpkgs { system = "x86_64-linux"; }).lib;
+    in rec {
     overlays = [
       (final: prev: {
         # overlay unstable into our stable nixpkgs set.
@@ -24,9 +26,10 @@
         };
       })
 
-      ./overlays/overlays.nix
+      (import ./overlays/overlays.nix)
     ];
 
+    # this is factored out to account for the disparate home directory locations that I deal with, namely macOS's /Users vs traditionally Linux's /home.
     homeConfiguration = { system, config, homeDirectory, username ? "tny" }:
       home-manager.lib.homeManagerConfiguration {
         inherit system homeDirectory username;
@@ -77,14 +80,28 @@
           homeDirectory = "/home/tny/";
         };
       };
+      venus = rec {
+        system = "x86_64-darwin";
+
+        config = darwin.lib.darwinSystem {
+          modules = [
+            ./darwin-configuration.nix
+          ];
+        };
+
+        home = homeConfiguration {
+          inherit system config;
+
+          homeDirectory = "/Users/apan/";
+        };
+      };
     };
 
-    darwinConfigurations."venus" = darwin.lib.darwinSystem {
-      modules = [
-        ./darwin-configuration.nix
-      ];
-    };
-    nixosConfigurations = builtins.mapAttrs (k: v: v.config) machines;
+    
+    darwinConfigurations = (builtins.mapAttrs (k: v: v.config)
+      (lib.filterAttrs (k: v: lib.hasSuffix "darwin" v.system) machines));
+    nixosConfigurations = (builtins.mapAttrs (k: v: v.config)
+      (lib.filterAttrs (k: v: lib.hasSuffix "linux" v.system) machines));
     homeConfigurations = builtins.mapAttrs (k: v: v.home) machines;
   };
 }
