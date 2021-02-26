@@ -30,7 +30,10 @@ in {
     pkgs.jq
     pkgs.ripgrep
     # pkgs.openrgb
+    pkgs.zip pkgs.unzip
+    upkgs.osu-lazer
 
+    pkgs.ffmpeg pkgs.exiftool
     upkgs.python3Packages.binwalk
   ] ++ (if pkgs.stdenv.isLinux then [
     pkgs.rnnoise-plugin
@@ -44,7 +47,7 @@ in {
     pkgs.pavucontrol
     pkgs.keepassxc
     pkgs.emacs
-    pkgs.spotify
+    upkgs.spotify
     pkgs.slack
     pkgs.discord
     pkgs.ppsspp
