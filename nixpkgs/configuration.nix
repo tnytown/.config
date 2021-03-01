@@ -165,10 +165,16 @@ in {
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
   programs.mtr.enable = true;
+  networking.wireguard.enable = true;
+  services.mullvad-vpn.enable = true;
 
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
+  services.openssh.passwordAuthentication = false;
+
   networking.firewall.enable = true;
+  networking.firewall.allowedTCPPorts = [ 54875 54941 8080 ];
+  networking.firewall.allowedUDPPorts = [ 54875 54941 ];
 
   documentation.man.enable = true;
   documentation.dev.enable = true;
