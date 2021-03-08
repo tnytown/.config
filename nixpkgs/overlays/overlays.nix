@@ -63,4 +63,29 @@
       sha256 = "0d5z6cbj9dg3hjw84pyg75f8dwdvi2mqxb9ic8dfqzk064ssiv7y";
     };
   });
+
+  linuxPackagesOverride = linuxPackages:
+    linuxPackages.extend (lfinal: lprev: {
+      corefreq =
+      let kernel = lprev.kernel;
+      in final.stdenv.mkDerivation rec {
+        pname = "corefreq";
+        version = "1.84";
+
+        nativeBuildInputs = [ kernel.moduleBuildDependencies ];
+
+        makeFlags = [
+          "KERNELDIR=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
+          "INSTALL_MOD_PATH=$(out)"
+          "PREFIX=$(out)"
+        ];
+
+        src = final.fetchFromGitHub {
+          owner = "cyring";
+          repo = pname;
+          rev = version;
+          hash = "sha256-w6OSeNEBZ+3mX1nt8QvT+i/9ATM3rc6UETjFB5Lk22M=";
+        };
+      };
+    });
 })

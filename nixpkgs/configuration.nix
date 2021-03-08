@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 let
   unstable = pkgs.unstable;
 in {
@@ -34,13 +34,14 @@ in {
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.kernelModules = [ "it87" "coretemp" "nct6683" "i2c-dev" ];
+  boot.extraModulePackages = [ config.boot.kernelPackages.corefreq ];
   boot.extraModprobeConfig = ''
   options nct6683 force=1
 '';
 
   powerManagement.cpuFreqGovernor = "schedutil";
   boot.supportedFilesystems = [ "ntfs" ];
-  boot.kernelPackages = unstable.linuxPackages_5_11;
+  boot.kernelPackages = pkgs.linuxPackagesOverride unstable.linuxPackages_5_11;
   
   networking.hostName = "navi";
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -161,7 +162,24 @@ in {
     unstable.firefox vim alacritty lm_sensors
     vulkan-tools
     openssl
+    config.boot.kernelPackages.corefreq
   ];
+
+  systemd.services.corefreqd = {
+    wantedBy = [ "multi-user.target" ];
+    description = "CoreFreq Daemon";
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = "${config.boot.kernelPackages.corefreq}/bin/corefreqd -q";
+      KillSignal = "SIGQUIT";
+      RemainAfterExit = false;
+      SuccessExitStatus = [ "SIGQUIT" "SIGUSR1" "SIGTERM" ];
+    };
+  };
+
+  #systemd.packages = [
+  #config.boot.kernelPackages.corefreq
+  #];
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
   programs.mtr.enable = true;
