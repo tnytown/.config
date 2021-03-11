@@ -33,7 +33,7 @@ in {
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.kernelModules = [ "it87" "coretemp" "nct6683" "i2c-dev" ];
+  boot.kernelModules = [ "it87" "coretemp" "nct6683" "i2c-dev" config.boot.kernelPackages.corefreq.moduleName ];
   boot.extraModulePackages = [ config.boot.kernelPackages.corefreq ];
   boot.extraModprobeConfig = ''
   options nct6683 force=1
@@ -42,7 +42,7 @@ in {
   powerManagement.cpuFreqGovernor = "schedutil";
   boot.supportedFilesystems = [ "ntfs" ];
   boot.kernelPackages = pkgs.linuxPackagesOverride unstable.linuxPackages_5_11;
-  
+
   networking.hostName = "navi";
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 

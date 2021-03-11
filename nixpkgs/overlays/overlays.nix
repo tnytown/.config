@@ -72,6 +72,8 @@
         pname = "corefreq";
         version = "1.84";
 
+        passthru.moduleName = "corefreqk";
+
         nativeBuildInputs = [ kernel.moduleBuildDependencies ];
 
         makeFlags = [
