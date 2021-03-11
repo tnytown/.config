@@ -15,10 +15,22 @@ in {
     # nixPath = [ "nixpkgs=/home/tny/.config/nixpkgs" ];
   };
 
-  fonts.fonts = [
-    pkgs.noto-fonts-cjk
-    pkgs.noto-fonts-emoji
-  ];
+  fonts = {
+    fonts = [
+      pkgs.meslo-lg
+      pkgs.noto-fonts-cjk
+      pkgs.noto-fonts-emoji
+    ];
+
+    fontconfig = {
+      enable = true;
+      defaultFonts = {
+        monospace = pkgs.lib.mkForce [ "Meslo LG S" ];
+        sansSerif = [ "Noto Sans" ];
+        serif = [ "Noto Serif" ];
+      };
+    };
+  };
 
   disabledModules = [
     "services/desktops/pipewire.nix"
