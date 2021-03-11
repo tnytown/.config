@@ -126,7 +126,15 @@ wait
   
   #home.sessionVariables = [];
   programs.bash.enable = true;
+  programs.bash.initExtra = ''[[ ! "$0" = "bash" ]] && exec fish'';
   programs.fish.enable = true;
+  programs.fish.interactiveShellInit = ''
+function __fish_command_not_found_handler --on-event fish_command_not_found
+    # ${pkgs.nix-index}/bin/nix-locate --minimal --no-group --type x --type s --top-level --whole-name --at-root "/bin/$argv[1]"
+    echo "$argv[1] not found. try"(set_color green) "nix search"(set_color reset)"."
+end
+'';
+
   programs.direnv.enable = true;
   programs.direnv.enableNixDirenvIntegration = true;
   programs.htop.showCpuFrequency = true;
