@@ -67,6 +67,7 @@ in {
 
     pkgs.flashrom
     pkgs.libbde
+    pkgs.dnsutils
   ] else []);
 
   systemd.user.services = pkgs.lib.mkIf pkgs.hostPlatform.isLinux {
@@ -124,7 +125,9 @@ wait
 
   services.syncthing.enable = pkgs.hostPlatform.isLinux;
   
-  #home.sessionVariables = [];
+  home.sessionVariables = {
+    EDITOR = "emacsclient";
+  };
   programs.bash.enable = true;
   programs.bash.initExtra = ''[[ ! "$0" = "bash" ]] && exec fish'';
   programs.fish.enable = true;
@@ -154,6 +157,11 @@ end
 # Nix
 .direnv/
 
+# clangd
+.clangd/
+
+# CMake stuff
+build/
 '').outPath;
     };
   };
