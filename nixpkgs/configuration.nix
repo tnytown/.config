@@ -148,7 +148,6 @@ in {
 
   # Enable the GNOME 3 Desktop Environment.
   services.xserver.enable = true;
-  services.xserver.videoDrivers = [ "nvidia" ];
   services.xserver.displayManager.sddm.enable = true;
   services.xserver.desktopManager.plasma5.enable = true;
   services.xserver.wacom.enable = true;
@@ -156,7 +155,6 @@ in {
     "DFP-4"
     { output = "HDMI-0"; monitorConfig = ''Option "ignore" "true"''; }
   ];
-  hardware.nvidia.modesetting.enable = true;
   hardware.opengl.driSupport32Bit = true;
   hardware.opengl.enable = true;
   hardware.steam-hardware.enable = true;
