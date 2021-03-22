@@ -4,7 +4,7 @@
   inputs = {
     # Track an arbitrary unstable revision that I like.
     unstable.url = "nixpkgs/nixpkgs-unstable";
-    nixpkgs.url = "nixpkgs/release-20.09";
+    nixpkgs.url = "nixpkgs/4e0d3868c679da20108db402785f924daa1a7fb5";
     darwin.url = "github:lnl7/nix-darwin/master";
     darwin.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -71,11 +71,7 @@
 
             modules = [
               nixConf
-              # use unstable PipeWire module.
-              (mkModule "${unstable}/nixos/modules/services/desktops/pipewire/pipewire.nix")
-              (mkModule "${unstable}/nixos/modules/services/desktops/pipewire/pipewire-media-session.nix")
 
-              # navi uses unstable for nvidia stuff.
               { nixpkgs.overlays = self.overlays; }
 
               ./configuration.nix

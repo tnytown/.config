@@ -31,10 +31,6 @@ in {
       };
     };
   };
-
-  disabledModules = [
-    "services/desktops/pipewire.nix"
-  ];
   
   imports =
     [
