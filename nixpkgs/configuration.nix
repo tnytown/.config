@@ -155,8 +155,6 @@ in {
   hardware.opengl = {
     enable = true;
     driSupport32Bit = true;
-    package = pkgs.unstable.mesa.drivers;
-    package32 = pkgs.unstable.pkgsi686Linux.mesa.drivers;
   };
 
   # hardware.enableRedistributableFirmware = true;
