@@ -155,6 +155,10 @@ in {
   hardware.opengl = {
     enable = true;
     driSupport32Bit = true;
+    extraPackages = with pkgs; [
+      rocm-opencl-icd
+      rocm-opencl-runtime
+    ];
   };
 
   # hardware.enableRedistributableFirmware = true;
