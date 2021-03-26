@@ -85,6 +85,11 @@ in {
     ];
   };
 
+  virtualisation.podman = {
+    enable = true;
+    dockerCompat = true;
+  };
+
   security.rtkit.enable = true;
   hardware.pulseaudio.enable = false;
   services.pipewire = {
@@ -94,6 +99,8 @@ in {
      pulse.enable = true;
      jack.enable = true;
    };
+
+  services.foldingathome.enable = true;
 
   services.avahi = {
     # https://discourse.nixos.org/t/avahi-for-printer-discovery-editing-nsswitch-conf/3254/4
@@ -173,6 +180,8 @@ in {
   
   nixpkgs.config.allowUnfree = true;
   environment.systemPackages = with pkgs; [
+    rocminfo
+    fahcontrol fahviewer
     manpages
     dmidecode efibootmgr
     unstable.firefox vim alacritty lm_sensors
