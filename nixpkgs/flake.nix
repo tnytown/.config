@@ -116,8 +116,9 @@
 
               modules = [
                 nixConf
-
-                { nixpkgs.overlays = self.overlaysList; }
+                {
+                  nixpkgs.overlays = self.overlaysList;
+                }
                 {
                   fileSystems."/" = {
                     device = "/dev/disk/by-label/root";
@@ -156,9 +157,13 @@
         (lib.filterAttrs (k: v: lib.hasSuffix "linux" v.system && !(v ? ignore)) machines));
       homeConfigurations = builtins.mapAttrs (k: v: v.home) machines;
 
-      deploy.nodes.psyche.profiles.system = {
-        user = "root";
-        path = deploy-rs.lib.x86_64-linux.activate.nixos self.machines.psyche.config;
+      deploy.nodes.psyche = {
+        sshUser = "root";
+        hostname = "psyche.tny.town";
+        profiles.system = {
+          user = "root";
+          path = deploy-rs.lib.x86_64-linux.activate.nixos self.machines.psyche.config;
+        };
       };
 
       # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
