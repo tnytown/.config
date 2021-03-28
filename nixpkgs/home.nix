@@ -148,7 +148,7 @@ end
     userEmail = "known@unown.me";
     
     extraConfig = {
-      credential.helper = "${pkgs.git-credential-keepassxc}/bin/git-credential-keepassxc";
+      credential.helper = "${pkgs.git-credential-keepassxc}/bin/git-credential-keepassxc --unlock 0";
       core.excludesFile = (pkgs.writeText ".gitignore" ''
 # Emacs
 *~
