@@ -55,6 +55,12 @@
         personal = (import ./overlays/overlays.nix);
       };
 
+      legacyPackages =
+        let system = "x86_64-linux";
+        in {
+          ${system} = overlays.personal nixpkgs.legacyPackages.${system} nixpkgs.legacyPackages.${system};
+        };
+
       overlaysList = lib.mapAttrsToList (s: t: t) self.overlays;
 
       # this is factored out to account for the disparate home directory locations that I deal with,
