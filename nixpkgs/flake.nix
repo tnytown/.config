@@ -4,7 +4,7 @@
   inputs = {
     # Track an arbitrary unstable revision that I like.
     unstable.url = "nixpkgs/nixpkgs-unstable";
-    nixpkgs.url = "nixpkgs/4e0d3868c679da20108db402785f924daa1a7fb5";
+    nixpkgs.follows = "unstable";
     darwin.url = "github:lnl7/nix-darwin/master";
     darwin.inputs.nixpkgs.follows = "nixpkgs";
 
