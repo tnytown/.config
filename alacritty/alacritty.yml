@@ -45,4 +45,4 @@ schemes:
       white:   '0xFFFFFF'
 
 colors: *modus_vivendi
-background_opacity: 0.0
+background_opacity: 0.75

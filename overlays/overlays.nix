@@ -44,7 +44,7 @@
       sha256 = "1kzq6mnffxfsh1q43c99aq2mgm60jp47cs389vg8qpd1cqh15nj0";
     };
 
-    cargoSha256 = "1ghag2v6nsf7qnh0i2mjzm0hkij65i7mnbb297mdsprc6i8mn3xn";
+    cargoSha256 = "sha256-fglAwQB+UdOJeBcg9NForaxrel7ME9p8VP4k4Rj0jtU=";
 
     meta = with prev.stdenv.lib; {
       description = "Helper that allows Git (and shell scripts) to use KeePassXC as credential store";
@@ -62,6 +62,49 @@
       url = "https://dl.discordapp.net/apps/linux/${version}/discord-${version}.tar.gz";
       hash = "sha256-wmUa70ssB4o9CXW4L9ORVx3sqmNuUjQ7tPEW2hxIBOc=";
     };
+  });
+
+  xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs(_: rec {
+    version = "9ba958c7d2a2ab11ac8014263e153c1236fb3014";
+    nativeBuildInputs = _.nativeBuildInputs ++ [ prev.scdoc prev.iniparser ];
+    buildInputs = _.buildInputs ++ [ prev.iniparser ];
+    postPatch = ''
+substituteInPlace meson.build --replace "join_paths(get_option('prefix'),get_option('libdir'))" "'${prev.iniparser}/lib'"
+'';
+    mesonFlags = [ "-Dman-pages=enabled" "-Dsystemd=enabled" "-Dsd-bus-provider=libsystemd" ];
+    src = prev.fetchFromGitHub {
+      owner = "emersion";
+      repo = _.pname;
+      rev = version;
+      hash = "sha256-DGTdrMertxMWL1ilYs+HHNkiTOnbcIlwMIdOTjyzdD4=";
+    };
+  });
+
+  ethminer = prev.ethminer.overrideAttrs(_: rec {
+    buildInputs = with prev; [
+      cli11 boost opencl-headers mesa ethash opencl-info
+      ocl-icd openssl jsoncpp
+    ];
+    cmakeFlags = [
+      "-DHUNTER_ENABLED=OFF"
+      "-DETHASHCUDA=OFF"
+      "-DAPICORE=ON"
+      "-DETHDBUS=OFF"
+      "-DCMAKE_BUILD_TYPE=Release"
+    ];
+  });
+
+  steam = prev.steam.overrideAttrs(_: rec {
+    src = prev.fetchurl {
+      url = "https://repo.steampowered.com/steam/archive/stable/steam_1.0.0.69.tar.gz";
+      sha256 = "sha256-b5g4AUprE/lTunJs59IDlGu5O/1dB0kBvCFq0Eqyx2c=";
+    };
+  });
+
+  obs-studio = prev.obs-studio.overrideAttrs(_: {
+    src = _.src.overrideAttrs(_1: {
+      rev = "27.0.0-rc2";
+    });
   });
 
   linuxPackagesOverride = linuxPackages:

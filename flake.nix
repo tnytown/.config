@@ -16,18 +16,23 @@
 
     deploy-rs.url = "github:serokell/deploy-rs";
     deploy-rs.inputs.nixpkgs.follows = "nixpkgs";
+
+    cachix.url = "github:jonascarpay/declarative-cachix";
+    cachix.flake = false;
+
+    speedy.url = "/home/tny/dev/speedy/";
   };
 
   # Cargo culted.
   # https://github.com/nix-community/home-manager/issues/1538#issuecomment-706627100
-  outputs = inputs@{ self, nixpkgs, unstable, darwin, rocm, home-manager, deploy-rs }:
+  outputs = inputs@{ self, nixpkgs, unstable, darwin, rocm, home-manager, deploy-rs, cachix, speedy }:
     let lib = (import inputs.nixpkgs { system = "x86_64-linux"; }).lib;
         nixConf = {
           # Pin flake versions for use with nix shell.
           nix.registry = {
             nixpkgs.flake = nixpkgs;
             unstable.flake = unstable;
-            s.flake = nixpkgs;
+            s.flake = self;
             u.flake = unstable;
           };
           nix.gc = {
@@ -57,8 +62,9 @@
 
       legacyPackages =
         let system = "x86_64-linux";
+            lpkgs = (import nixpkgs { inherit system; config.allowUnfree = true; });
         in {
-          ${system} = overlays.personal nixpkgs.legacyPackages.${system} nixpkgs.legacyPackages.${system};
+          ${system} = (lpkgs // overlays.personal lpkgs lpkgs);
         };
 
       overlaysList = lib.mapAttrsToList (s: t: t) self.overlays;
@@ -90,8 +96,14 @@
               inherit system;
 
               modules = [
+                (import cachix)
+                {
+                  cachix = [
+                    { name = "nixos-rocm"; sha256 = "1l2g8l55b6jzb84m2dcpf532rm7p2g4dl56j3pbrfm03j54sg0v0"; }
+                  ];
+                }
                 nixConf
-
+                # cachix
                 { nixpkgs.overlays = self.overlaysList ++ [(import rocm)]; }
 
                 ./configuration.nix
@@ -132,6 +144,7 @@
                   };
                   boot.loader.grub.device = "/dev/vda";
                 }
+                speedy.nixosModule
 
                 ./psyche-configuration.nix
               ];
@@ -157,6 +170,7 @@
       };
 
 
+      # cachix = (import inputs.cachix);
       darwinConfigurations = (builtins.mapAttrs (k: v: v.config)
         (lib.filterAttrs (k: v: lib.hasSuffix "darwin" v.system) machines));
       nixosConfigurations = (builtins.mapAttrs (k: v: v.config)

@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 let upkgs = pkgs.unstable;
 in {
@@ -13,7 +13,7 @@ in {
   # You can update Home Manager without changing this value. See
   # the Home Manager release notes for a list of state version
   # changes in each release.
-  home.stateVersion = "21.03";
+  home.stateVersion = lib.mkForce "21.03"; # wtf?
 
   nixpkgs.config.allowUnfree = true;
   home.packages = [
@@ -36,10 +36,10 @@ in {
     pkgs.ffmpeg pkgs.exiftool
     upkgs.python3Packages.binwalk
   ] ++ (if pkgs.stdenv.isLinux then [
+    pkgs.jetbrains.idea-ultimate
     pkgs.rnnoise-plugin
     
     pkgs.multimc
-    upkgs.steam
 
     pkgs.gnome3.gnome-shell-extensions
     pkgs.nordic
@@ -68,7 +68,13 @@ in {
     pkgs.flashrom
     pkgs.libbde
     pkgs.dnsutils
+
+    pkgs.slurp pkgs.grim pkgs.wl-clipboard
   ] else []);
+
+  xdg.configFile = pkgs.lib.mkIf pkgs.stdenv.isLinux {
+    "obs-studio/plugins/wlrobs".source = "${pkgs.obs-wlrobs}/share/obs/obs-plugins/wlrobs";
+  };
 
   systemd.user.services = pkgs.lib.mkIf pkgs.hostPlatform.isLinux {
     # rnnoise-plugin
@@ -88,7 +94,7 @@ export LV2_PATH=${pkgs.rnnoise-plugin}/lib/lv2/
 pw='${pkgs.unstable.pipewire}/bin'
 pwjack=$pw'/pw-jack'
 pwcli=$pw'/pw-cli'
-pwdump=$pw'/pw-dump'
+pwdump=$pw'/pw-dump -N'
 jalv='${pkgs.jalv}/bin/jalv'
 pactl='${pkgs.pulseaudio}/bin/pactl'
 
@@ -97,12 +103,10 @@ function cleanup() {
   $pwcli destroy $MODNUM
 }
 
-#function pwdump() {
-#  "$pw/pw-dump" $?
-#}
-
 # find mic and related info
-mic=$($pwdump | jq -re '.[] | select(.info.props."device.product.name" == "HD Webcam C615" and .info.props."media.class" == "Audio/Device")')
+mic=$($pwdump | jq -re '
+.[] | select(.info.props."device.product.name" == "HD Webcam C615"
+and .info.props."media.class" == "Audio/Device")')
 
 micid=$(echo $mic | jq -re '.id')
 micportid=$(echo $mic | jq -re '.info.params.Route[0].index')
@@ -110,14 +114,13 @@ micportid=$(echo $mic | jq -re '.info.params.Route[0].index')
 echo "found mic @ $micid with output @ $micportid"
 
 # w-dump | jq -re '.[] | select(.info.props."node.name" == "Noise Suppression (RnNoise)")'
-#MODNUM=$($pactl load-module module-null-sink object.linger=1 media.class=Audio/Duplex sink_name=boom channel_map=mono)
-#echo "loaded sink @ $MODNUM"
+MODNUM=$($pactl load-module module-null-sink object.linger=1 media.class=Audio/Duplex sink_name=boom channel_map=mono)
+echo "loaded sink @ $MODNUM"
 trap cleanup SIGTERM
 
 $pwjack $jalv -i 'https://github.com/werman/noise-suppression-for-voice' &
 
 wait
-
 '') + "";
       };
     };
@@ -171,8 +174,6 @@ build/
 #
 #'';
 
-
-  
   gtk.enable = pkgs.hostPlatform.isLinux;
   gtk.theme.name = "Nordic";
   dconf.settings = pkgs.lib.mkIf pkgs.hostPlatform.isLinux {
@@ -182,5 +183,90 @@ build/
     "org/gnome/shell/extensions/user-theme" = {
       name = "Nordic";
     };
+  };
+
+  wayland.windowManager.sway = let
+    pb = pkg: "${pkgs.${pkg}}/bin/${pkg}";
+    mod = "Mod1";
+  in {
+    enable = true;
+    package = null;
+    config = {
+      modifier = mod;
+
+      bars = [{
+        mode = "dock";
+        position = "top";
+        #statusCommand = "${pkgs.sway}/bin/swaybar";
+        statusCommand = (pkgs.writeScript "swaystatus" ''
+set -euo pipefail
+while true; do
+      sleep 1;
+      echo \
+           'load:' $(uptime | sed -E 's/.*load average: ([^ ]+),.*/\1/')'x' '|' \
+           'cpu:' $(sensors -j 'k10temp-pci-*' | jq '.. | .Tdie?.temp2_input | select(. != null) | floor')'C' '|' \
+           'mem:' $(free -mh | awk 'NR == 2 {print $3}') '|' \
+           $(date +'%Y-%m-%d %l:%M:%S %p');
+done
+'').outPath;
+        fonts = [ "monospace 10" ];
+      }];
+      keybindings = {
+        "${mod}+Shift+j" = "focus left";
+        "${mod}+Shift+k" = "focus right";
+	      "${mod}+Return" = "exec ${pb "alacritty"}";
+        "Mod4+q" = "kill";
+        "Mod4+l" = "exec swaylock -F -i ~/Pictures/bg_gw_city_snow_night.jpg";
+
+        "Ctrl+Mod4+Shift+4" = "exec ${pkgs.writeScript "screenshot.sh" ''
+slurp | grim -g - - | wl-copy -t 'image/png'
+''}";
+        "Mod4+Space" = ''
+exec ${pb "j4-dmenu-desktop"} --dmenu="${pb "bemenu"} -i" --term="${pb "alacritty"}"
+'';
+        "Mod4+Shift+f" = "fullscreen toggle";
+      } // builtins.listToAttrs (map (s:
+let x = builtins.toString s; in
+{ name = "Ctrl+${x}"; value = "workspace number ${x}"; }) (lib.range 1 5));
+
+      output = {
+        # L
+        "DP-1" = {
+          position = "0 0";
+          mode = "2560x1440@119.998Hz";
+        };
+        # R
+        "DP-2" = {
+          position = "2560 0";
+        };
+        # headset
+        "HDMI-A-1" = {
+          disable = "";
+        };
+
+        # global
+        "*" = {
+          bg = "~/Pictures/bg_gw_city_snow_night.jpg fill";
+        };
+      };
+
+      input = {
+        "1386:770:Wacom_Intuos_PT_S_Pen" = {
+            map_to_output = "DP-1";
+            map_from_region = "0.0x0.0 0.203x0.267";
+        };
+      };
+    };
+
+    extraConfig = ''
+exec gaps inner all set 30
+exec gaps outer all set 0
+
+exec swayidle -w \
+    timeout 300 'swaylock -F -i ~/Pictures/bg_gw_city_snow_night.jpg' \
+    timeout 315 'swaymsg "output * dpms off"' resume 'swaymsg "output * dpms on"' \
+    before-sleep 'swaylock -F -i ~/Pictures/bg_gw_city_snow_night.jpg'
+'';
+    systemdIntegration = true;
   };
 }
