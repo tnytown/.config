@@ -26,7 +26,7 @@
   # Cargo culted.
   # https://github.com/nix-community/home-manager/issues/1538#issuecomment-706627100
   outputs = inputs@{ self, nixpkgs, unstable, darwin, rocm, home-manager, deploy-rs, cachix, speedy }:
-    let lib = (import inputs.nixpkgs { system = "x86_64-linux"; }).lib;
+    let lib = nixpkgs.lib;
         nixConf = {
           # Pin flake versions for use with nix shell.
           nix.registry = {

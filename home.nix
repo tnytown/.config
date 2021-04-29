@@ -72,11 +72,11 @@ in {
     pkgs.slurp pkgs.grim pkgs.wl-clipboard
   ] else []);
 
-  xdg.configFile = pkgs.lib.mkIf pkgs.stdenv.isLinux {
+  xdg.configFile = lib.mkIf pkgs.stdenv.isLinux {
     "obs-studio/plugins/wlrobs".source = "${pkgs.obs-wlrobs}/share/obs/obs-plugins/wlrobs";
   };
 
-  systemd.user.services = pkgs.lib.mkIf pkgs.hostPlatform.isLinux {
+  systemd.user.services = lib.mkIf pkgs.stdenv.isLinux {
     # rnnoise-plugin
     rnnoise = {
       Unit = {
@@ -176,7 +176,7 @@ build/
 
   gtk.enable = pkgs.hostPlatform.isLinux;
   gtk.theme.name = "Nordic";
-  dconf.settings = pkgs.lib.mkIf pkgs.hostPlatform.isLinux {
+  dconf.settings = lib.mkIf pkgs.hostPlatform.isLinux {
     "org/gnome/desktop/wm/preferences" =  {
       theme = "Nordic";
     };

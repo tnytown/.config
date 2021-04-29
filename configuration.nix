@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ pkgs, config, ... }:
+{ lib, pkgs, config, ... }:
 let
   unstable = pkgs.unstable;
   agentJar = builtins.fetchurl {
@@ -29,7 +29,7 @@ in {
     fontconfig = {
       enable = true;
       defaultFonts = {
-        monospace = pkgs.lib.mkForce [ "Meslo LG S" ];
+        monospace = lib.mkForce [ "Meslo LG S" ];
         sansSerif = [ "Noto Sans" ];
         serif = [ "Noto Serif" ];
       };
@@ -188,6 +188,8 @@ logger_stdout_level=0
   #  { output = "HDMI-0"; monitorConfig = ''Option "ignore" "true"''; }
   # ];
 
+  systemd.packages = [ pkgs.hawck ];
+
   programs.sway = {
     enable = true;
     extraPackages = with pkgs; [
@@ -273,6 +275,7 @@ exec ${pkgs.systemd}/bin/systemd-cat -t sway ${pkgs.sway}/bin/sway --config ${co
 
   services.corefreq.enable = true;
   environment.systemPackages = with pkgs; [
+    hawck
     rocminfo
     fahcontrol fahviewer
     manpages
