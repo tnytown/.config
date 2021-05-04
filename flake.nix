@@ -8,6 +8,9 @@
     darwin.url = "github:lnl7/nix-darwin/master";
     darwin.inputs.nixpkgs.follows = "nixpkgs";
 
+    sops-nix.url = "github:knownunown/sops-nix/age-support";
+    sops-nix.inputs.nixpkgs.follows = "unstable";
+
     rocm.url = "github:nixos-rocm/nixos-rocm";
     rocm.flake = false;
 
@@ -25,27 +28,43 @@
 
   # Cargo culted.
   # https://github.com/nix-community/home-manager/issues/1538#issuecomment-706627100
-  outputs = inputs@{ self, nixpkgs, unstable, darwin, rocm, home-manager, deploy-rs, cachix, speedy }:
+  outputs = inputs@{ self, nixpkgs, unstable, darwin, sops-nix, rocm, home-manager, deploy-rs, cachix, speedy }:
     let lib = nixpkgs.lib;
-        nixConf = {
+        nixConf = system: {
           # Pin flake versions for use with nix shell.
-          nix.registry = {
-            nixpkgs.flake = nixpkgs;
-            unstable.flake = unstable;
-            s.flake = self;
-            u.flake = unstable;
-          };
-          nix.gc = {
-            automatic = true;
-            dates = "weekly";
-            options = "--delete-older-than 14d";
+          nix = {
+            registry = {
+              nixpkgs.flake = nixpkgs;
+              unstable.flake = unstable;
+              s.flake = self;
+              u.flake = unstable;
+            };
+            gc = {
+              automatic = true;
+              dates = "weekly";
+              options = "--delete-older-than 14d";
+            };
+
+            package = nixpkgs.legacyPackages.${system}.nixFlakes;
+            extraOptions = ''
+                experimental-features = nix-command flakes
+'';
+            autoOptimiseStore = true;
           };
         };
     in rec {
       devShell."x86_64-linux" = let pkgs =
         nixpkgs.legacyPackages."x86_64-linux"; in pkgs.mkShell {
+          sopsAgeKeyDirs = [
+            ./keys
+          ];
           buildInputs = with pkgs; [
             deploy-rs.defaultPackage."x86_64-linux"
+            (pkgs.writeShellScriptBin "nrb" "sudo nixos-rebuild -L switch --flake .")
+            (pkgs.writeShellScriptBin "hrb" "nix build --show-trace -L .#homeConfigurations.navi.activationPackage && result/activate")
+            nixfmt
+
+            (pkgs.callPackage sops-nix {}).sops-age-hook
           ];
         };
       overlays = {
@@ -102,11 +121,18 @@
                     { name = "nixos-rocm"; sha256 = "1l2g8l55b6jzb84m2dcpf532rm7p2g4dl56j3pbrfm03j54sg0v0"; }
                   ];
                 }
-                nixConf
+                (nixConf system)
                 # cachix
                 { nixpkgs.overlays = self.overlaysList ++ [(import rocm)]; }
 
                 ./configuration.nix
+                ./machines/navi.nix
+                ./modules/security.nix
+                ./modules/corefreq.nix
+                ./modules/desktop.nix
+                ./modules/jenkins-agent.nix
+                ./modules/minecraft-server.nix
+                sops-nix.nixosModules.sops
               ];
             };
 
@@ -133,7 +159,7 @@
               inherit system;
 
               modules = [
-                nixConf
+                (nixConf system)
                 {
                   nixpkgs.overlays = self.overlaysList;
                 }
@@ -156,7 +182,7 @@
 
           config = darwin.lib.darwinSystem {
             modules = [
-              nixConf
+              (nixConf system)
               ./darwin-configuration.nix
             ];
           };

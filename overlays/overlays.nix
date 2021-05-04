@@ -11,6 +11,41 @@
     };
   });
 
+  hawck = prev.stdenv.mkDerivation rec {
+    pname = "hawck";
+    version = "60aafac2d8e5a6ec314dd41383daa5f4658caca5";
+
+    nativeBuildInputs = [ prev.meson prev.ninja prev.pkg-config prev.makeWrapper ];
+    buildInputs = [ prev.lua5_3 prev.libnotify prev.catch2 prev.python3 ];
+
+    mesonFlags = let etc = "${placeholder "out"}/etc";
+                 in [ "-Dhawck_cfg_dir=${etc}" "-Dmodules_load_dir=${etc}/modules-load.d" "-Dudev_rules_dir=${etc}/udev/rules.d" ];
+    src = prev.fetchFromGitHub {
+      owner = "snyball";
+      repo = "Hawck";
+      rev = "${version}";
+      sha256 = "sha256-lHTObTBG+RSN0y4rb22nwiY/wSYKRon6iTAdNLocj+M=";
+    };
+
+    patchPhase = ''
+    substituteInPlace bin/meson.build --replace "systemd_prefix = '/usr/lib/systemd'" "systemd_prefix = '${placeholder "out"}/lib/systemd'"
+    substituteInPlace src/Lua/Keymap.lua --replace '/usr/share/kbd/keymaps' '${prev.kbd}/share/keymaps'
+    substituteInPlace bin/hawck-install.sh.in --replace "#!/bin/bash" "#!${prev.bash}/bin/bash"
+    substituteInPlace src/scripts/hawck-add.sh --replace "lua5.3" "echo \$script_path; cat \$script_path; LUA_PATH=\$LUA_PATH';'\$(realpath \$HOME/.local/share/hawck/scripts/)'/?.lua' ${prev.lua5_3}/bin/lua"
+    substituteInPlace src/Version.cpp --replace '-' ""
+    substituteInPlace src/KBDDaemon.cpp --replace '(IN_CREATE | IN_MODIFY)' 'IN_ATTRIB'
+'';
+    postFixup = let luaPath = "$out/share/hawck/LLib/?.lua;$out/share/hawck/?.lua";
+                in ''
+    wrapProgram "$out/bin/hawck-add" --set LUA_PATH "${luaPath}"
+    wrapProgram "$out/bin/hawck-macrod" --set LUA_PATH "${luaPath}" \
+                                        --prefix PATH : "${prev.lib.makeBinPath [ prev.gzip ]}" \
+                                        --prefix PATH : "$out/bin"
+'';
+
+    # DESTDIR = "${placeholder "out"}";
+  };
+
   rnnoise-plugin = prev.rnnoise-plugin.overrideAttrs(o: {
     version = "e391a9b";
     src = prev.fetchFromGitHub {
@@ -101,10 +136,25 @@ substituteInPlace meson.build --replace "join_paths(get_option('prefix'),get_opt
     };
   });
 
-  obs-studio = prev.obs-studio.overrideAttrs(_: {
-    src = _.src.overrideAttrs(_1: {
-      rev = "27.0.0-rc2";
-    });
+  obs-studio = prev.obs-studio.overrideAttrs(_: rec {
+    version = "27.0.0-rc2";
+    src = prev.fetchFromGitHub {
+      owner = "obsproject";
+      repo = "obs-studio";
+      rev = version;
+      sha256 = "sha256-obmTdR7Ip3gY6q2PMKArPisnschdPt6vsj7VC7EHRiw=";
+      fetchSubmodules = true;
+    };
+  });
+
+  wlgreet = prev.greetd.wlgreet.overrideAttrs(_: rec {
+    version = "2366f870440fe9ab9dd5270edc47ec54ee24ff5d";
+    src = prev.fetchFromSourcehut {
+      owner = "~kennylevinsen";
+      repo = _.pname;
+      rev = version;
+      sha256 = "sha256-cCoROsGhKOR8unMPFrtYIZZT1Wgq9Cn/BJzJnE2rwe8=";
+    };
   });
 
   linuxPackagesOverride = linuxPackages:
