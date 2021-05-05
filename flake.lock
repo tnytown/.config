@@ -188,7 +188,7 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "narHash": "sha256-kIru8LavDe/BWHSF9mLM8bCBvoluzBjk/SjRkxwgNp0=",
+        "narHash": "sha256-i26s48LPyb9w4JU6LKML5DIQLJ1TFId48g8kmWs1x/Y=",
         "path": "/home/tny/dev/speedy",
         "type": "path"
       },
