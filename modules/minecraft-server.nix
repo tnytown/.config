@@ -4,7 +4,7 @@ in {
   services.minecraft-server = {
     enable = true;
     eula = true;
-    package = unstable.papermc;
+    package = (unstable.papermc.override { jre = pkgs.jdk11; });
     declarative = true;
 
     jvmOpts = "-Xms4G -Xmx4G " +
