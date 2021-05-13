@@ -199,18 +199,30 @@ in {
       modifier = mod;
 
       bars = [{
+        colors = {
+          background = "#000000a0";
+        };
         mode = "dock";
         position = "top";
         #statusCommand = "${pkgs.sway}/bin/swaybar";
         statusCommand = (pkgs.writeScript "swaystatus" ''
           set -euo pipefail
+
+          function n() {
+                ip -j -s link | jq -r 'reduce (.. | .bytes? | select(. != null)) as $i (0; . + $i)'
+          }
+
+          np=`n`
           while true; do
                 sleep 1;
+                np_o="$np"
+                np=`n`
                 echo \
                      'load:' $(uptime | sed -E 's/.*load average: ([^ ]+),.*/\1/')'x' '|' \
                      'cpu:' $(sensors -j 'k10temp-pci-*' | jq '.. | .Tdie?.temp2_input | select(. != null) | floor')'C' '|' \
                      'mem:' $(free -mh | awk 'NR == 2 {print $3}') '|' \
-                     $(date +'%Y-%m-%d %l:%M:%S %p');
+                     'net:' "$(echo $(( $np - $np_o )) | numfmt --to=iec-i --padding=5)" '|' \
+                     $(date +'%Y-%m-%d %H:%M:%S');
           done
         '').outPath;
         fonts = [ "monospace 10" ];
