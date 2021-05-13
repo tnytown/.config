@@ -51,7 +51,7 @@ in {
     upkgs.openrgb
     pkgs.pavucontrol
     pkgs.keepassxc
-    pkgs.emacs
+    #pkgs.emacsPgtkGcc
     upkgs.spotify
     pkgs.slack
     pkgs.discord

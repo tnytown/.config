@@ -38,6 +38,8 @@ in {
   #networking.wireless.iwd.enable = true;
   networking.useNetworkd = true;
 
+  services.emacs.package = pkgs.emacsPgtk;
+  services.emacs.enable = true;
   services.hostapd = {
     enable = false;
     wpa = true;
