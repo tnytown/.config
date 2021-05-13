@@ -172,7 +172,7 @@ substituteInPlace meson.build --replace "join_paths(get_option('prefix'),get_opt
           owner = "cyring";
           repo = pname;
           rev = version;
-          hash = "sha256-w6OSeNEBZ+3mX1nt8QvT+i/9ATM3rc6UETjFB5Lk22M=";
+          hash = "sha256-8dROUO3umAuORmotmQVLPnz2wPTNf9/2gkJapytamP4=";
         };
       };
     });
