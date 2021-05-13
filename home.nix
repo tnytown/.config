@@ -288,8 +288,8 @@ in {
       };
 
       assigns = {
-        "1: web" = [{ class = "^Firefox$"; }];
-        "2: dev" = [ { app_id = "^Alacritty$"; } { class = "^Emacs$"; } ];
+        "1: web" = [{ app_id = "^firefox$"; }];
+        "2: dev" = [ { app_id = "^Alacritty$"; } { app_id = "^emacs$"; } ];
         "5: chat" = [{ class = "^discord$"; }];
       };
 
