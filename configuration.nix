@@ -147,6 +147,7 @@ logger_stdout_level=0
 
   services.ratbagd.enable = true;
   programs.steam.enable = true;
+  programs.steam.remotePlay.openFirewall = true;
 
   hardware.opengl = {
     enable = true;
@@ -194,8 +195,8 @@ logger_stdout_level=0
   services.openssh.passwordAuthentication = false;
 
   networking.firewall.enable = true;
-  networking.firewall.allowedTCPPorts = [ 54875 54941 8080 ];
-  networking.firewall.allowedUDPPorts = [ 54875 54941 ];
+  networking.firewall.allowedTCPPorts = [ 54875 54941 8080 27036 27037 ];
+  networking.firewall.allowedUDPPorts = [ 54875 54941 27031 27036 ];
 
   documentation.man.enable = true;
   documentation.dev.enable = true;
