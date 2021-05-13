@@ -8,8 +8,9 @@
     darwin.url = "github:lnl7/nix-darwin/master";
     darwin.inputs.nixpkgs.follows = "nixpkgs";
 
+    emacs.url = "github:nix-community/emacs-overlay/3dac3a17fa56d8f3713c81d94d79b3fa11bbeb72";
     sops-nix.url = "github:knownunown/sops-nix/age-support";
-    sops-nix.inputs.nixpkgs.follows = "unstable";
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
     rocm.url = "github:nixos-rocm/nixos-rocm";
     rocm.flake = false;
@@ -24,11 +25,12 @@
     cachix.flake = false;
 
     speedy.url = "/home/tny/dev/speedy/";
+    binja.url = "/home/tny/re/";
   };
 
   # Cargo culted.
   # https://github.com/nix-community/home-manager/issues/1538#issuecomment-706627100
-  outputs = inputs@{ self, nixpkgs, unstable, darwin, sops-nix, rocm, home-manager, deploy-rs, cachix, speedy }:
+  outputs = inputs@{ self, nixpkgs, unstable, darwin, sops-nix, rocm, home-manager, deploy-rs, cachix, speedy, ... }:
     let lib = nixpkgs.lib;
         nixConf = system: {
           # Pin flake versions for use with nix shell.
@@ -119,11 +121,12 @@
                 {
                   cachix = [
                     { name = "nixos-rocm"; sha256 = "1l2g8l55b6jzb84m2dcpf532rm7p2g4dl56j3pbrfm03j54sg0v0"; }
+		                { name = "nix-community"; sha256 = "1r0dsyhypwqgw3i5c2rd5njay8gqw9hijiahbc2jvf0h52viyd9i"; }
                   ];
                 }
                 (nixConf system)
                 # cachix
-                { nixpkgs.overlays = self.overlaysList ++ [(import rocm)]; }
+                { nixpkgs.overlays = self.overlaysList ++ [(import rocm) inputs.emacs.overlay]; }
 
                 ./configuration.nix
                 ./machines/navi.nix
@@ -133,6 +136,9 @@
                 ./modules/jenkins-agent.nix
                 ./modules/minecraft-server.nix
                 sops-nix.nixosModules.sops
+                {
+                  environment.systemPackages = [ inputs.binja.defaultPackage.${system} ];
+                }
               ];
             };
 
