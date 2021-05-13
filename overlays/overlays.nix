@@ -129,13 +129,6 @@ substituteInPlace meson.build --replace "join_paths(get_option('prefix'),get_opt
     ];
   });
 
-  steam = prev.steam.overrideAttrs(_: rec {
-    src = prev.fetchurl {
-      url = "https://repo.steampowered.com/steam/archive/stable/steam_1.0.0.69.tar.gz";
-      sha256 = "sha256-b5g4AUprE/lTunJs59IDlGu5O/1dB0kBvCFq0Eqyx2c=";
-    };
-  });
-
   obs-studio = prev.obs-studio.overrideAttrs(_: rec {
     version = "27.0.0-rc2";
     src = prev.fetchFromGitHub {
