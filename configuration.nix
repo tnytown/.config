@@ -182,6 +182,7 @@ logger_stdout_level=0
     vulkan-tools
     openssl
     adoptopenjdk-bin git
+    mullvad-vpn
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -189,6 +190,7 @@ logger_stdout_level=0
   programs.mtr.enable = true;
   networking.wireguard.enable = true;
   services.mullvad-vpn.enable = true;
+  networking.firewall.checkReversePath = "loose";
 
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
