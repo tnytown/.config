@@ -158,6 +158,7 @@ in {
     userEmail = "known@unown.me";
 
     extraConfig = {
+      init.defaultBranch = "main";
       credential.helper =
         "${pkgs.git-credential-keepassxc}/bin/git-credential-keepassxc --unlock 0";
       core.excludesFile = (pkgs.writeText ".gitignore" ''

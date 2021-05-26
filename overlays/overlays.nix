@@ -92,10 +92,10 @@
   };
 
   discord = prev.discord.overrideAttrs(_: rec {
-    version = "0.0.14";
+    version = "0.0.15";
     src = prev.fetchurl {
       url = "https://dl.discordapp.net/apps/linux/${version}/discord-${version}.tar.gz";
-      hash = "sha256-wmUa70ssB4o9CXW4L9ORVx3sqmNuUjQ7tPEW2hxIBOc=";
+      hash = "sha256-re3pVOnGltluJUdZtTlSeiSrHULw1UjFxDCdGj/Dwl4=";
     };
   });
 
