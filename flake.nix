@@ -25,6 +25,7 @@
     cachix.flake = false;
 
     speedy.url = "/home/tny/dev/speedy/";
+    fishcgi.url = "/home/tny/dev/fish-cgi/";
     binja.url = "/home/tny/re/";
   };
 
@@ -137,8 +138,29 @@
                 ./modules/minecraft-server.nix
                 sops-nix.nixosModules.sops
                 {
+                  systemd.services.hawck-inputd.enable = false;
                   environment.systemPackages = [ inputs.binja.defaultPackage.${system} ];
                 }
+                inputs.fishcgi.nixosModule
+                ({ config, ... }: {
+                  services.nginx.enable = true;
+                  services.fishcgi.enable = true;
+                  services.nginx.virtualHosts."localhost" = {
+                    default = true;
+                    root = "/var/lib/fishcgi/";
+                    locations."/".index = "index.fish";
+                    locations."~ \.fish$" = {
+                      extraConfig = ''
+                        # try_files $uri =404;
+                        fastcgi_pass unix:${config.services.fishcgi.socket};
+                        fastcgi_index ${config.services.fishcgi.example};
+                        include ${config.services.nginx.package}/conf/fastcgi_params;
+                        include ${config.services.nginx.package}/conf/fastcgi.conf;
+                      '';
+                    };
+                  };
+                  networking.firewall.allowedTCPPorts = [ 80 ];
+                })
               ];
             };
 
