@@ -8,7 +8,7 @@
     darwin.url = "github:lnl7/nix-darwin/master";
     darwin.inputs.nixpkgs.follows = "nixpkgs";
 
-    emacs.url = "github:nix-community/emacs-overlay/3dac3a17fa56d8f3713c81d94d79b3fa11bbeb72";
+    emacs.url = "github:nix-community/emacs-overlay";
     sops-nix.url = "github:knownunown/sops-nix/age-support";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -25,15 +25,17 @@
     cachix.flake = false;
 
     speedy.url = "/home/tny/dev/speedy/";
+    speedy.inputs.nixpkgs.follows = "nixpkgs";
     fishcgi.url = "/home/tny/dev/fish-cgi/";
     binja.url = "/home/tny/re/";
+    binja.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   # Cargo culted.
   # https://github.com/nix-community/home-manager/issues/1538#issuecomment-706627100
   outputs = inputs@{ self, nixpkgs, unstable, darwin, sops-nix, rocm, home-manager, deploy-rs, cachix, speedy, ... }:
     let lib = nixpkgs.lib;
-        nixConf = system: {
+        nixConf = system: useCA: {
           # Pin flake versions for use with nix shell.
           nix = {
             registry = {
@@ -49,7 +51,11 @@
             };
 
             package = nixpkgs.legacyPackages.${system}.nixFlakes;
-            extraOptions = ''
+            extraOptions = if useCA then ''
+                experimental-features = nix-command flakes ca-references ca-derivations
+                substituters = https://cache.ngi0.nixos.org/
+                trusted-public-keys = cache.ngi0.nixos.org-1:KqH5CBLNSyX184S9BKZJo1LxrxJ9ltnY2uAs5c/f1MA=
+'' else ''
                 experimental-features = nix-command flakes
 '';
             autoOptimiseStore = true;
@@ -125,7 +131,7 @@
 		                { name = "nix-community"; sha256 = "1r0dsyhypwqgw3i5c2rd5njay8gqw9hijiahbc2jvf0h52viyd9i"; }
                   ];
                 }
-                (nixConf system)
+                (nixConf system true)
                 # cachix
                 { nixpkgs.overlays = self.overlaysList ++ [(import rocm) inputs.emacs.overlay]; }
 
@@ -139,7 +145,7 @@
                 sops-nix.nixosModules.sops
                 {
                   systemd.services.hawck-inputd.enable = false;
-                  environment.systemPackages = [ inputs.binja.defaultPackage.${system} ];
+                  # environment.systemPackages = [ inputs.binja.defaultPackage.${system} ];
                 }
                 inputs.fishcgi.nixosModule
                 ({ config, ... }: {
@@ -187,7 +193,7 @@
               inherit system;
 
               modules = [
-                (nixConf system)
+                (nixConf system true)
                 {
                   nixpkgs.overlays = self.overlaysList;
                 }
@@ -210,7 +216,7 @@
 
           config = darwin.lib.darwinSystem {
             modules = [
-              (nixConf system)
+              (nixConf system false)
               ./darwin-configuration.nix
             ];
           };
@@ -236,7 +242,7 @@
         hostname = "psyche.tny.town";
         profiles.system = {
           user = "root";
-          path = deploy-rs.lib.x86_64-linux.activate.nixos self.machines.psyche.config;
+          path = builtins.trace (deploy-rs.lib.x86_64-linux.activate.nixos self.machines.psyche.config).outPath (deploy-rs.lib.x86_64-linux.activate.nixos self.machines.psyche.config);
         };
       };
 
