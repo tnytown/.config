@@ -41,28 +41,35 @@ in {
     pkgs.exiftool
     upkgs.python3Packages.binwalk
   ] ++ (if pkgs.stdenv.isLinux then [
-    pkgs.jetbrains.idea-ultimate
+    # pkgs.jetbrains.idea-ultimate
     pkgs.rnnoise-plugin
 
-    pkgs.multimc
+    ((pkgs.multimc.overrideAttrs(o: { postInstall = o.postInstall + ''
+	wrapProgram $out/bin/multimc --prefix PATH : ${lib.makeBinPath [
+    (pkgs.runCommandNoCC "java16-link" {} ''
+mkdir -p $out/bin
+ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
+'')
+  ]}
+''; })).override { })
 
     pkgs.gnome3.gnome-shell-extensions
     pkgs.nordic
     upkgs.openrgb
     pkgs.pavucontrol
     pkgs.keepassxc
-    #pkgs.emacsPgtkGcc
+    # pkgs.emacsPgtkGcc
     upkgs.spotify
     pkgs.slack
     pkgs.discord
-    pkgs.ppsspp
+    # pkgs.ppsspp
     pkgs.zoom-us
     pkgs.chromium
     pkgs.mpv
     pkgs.lutris
-    pkgs.slic3r-prusa3d
+    # pkgs.slic3r-prusa3d
     pkgs.openscad
-    pkgs.obs-studio
+    #pkgs.obs-studio
     pkgs.shotcut
     pkgs.qjackctl
     pkgs.jalv
@@ -77,16 +84,17 @@ in {
     pkgs.slurp
     pkgs.grim
     pkgs.wl-clipboard
-  ] else
-    [ ]);
+  ] else [ ]);
 
   xdg.configFile = lib.mkIf pkgs.stdenv.isLinux {
-    "obs-studio/plugins/wlrobs".source =
-      "${pkgs.obs-wlrobs}/share/obs/obs-plugins/wlrobs";
+    /*"obs-studio/plugins/wlrobs".source =
+      "${pkgs.obs-wlrobs}/share/obs/obs-plugins/wlrobs";*/
   };
+
   xdg.dataFile = lib.mkIf pkgs.stdenv.isLinux {
     "hawck/scripts/LLib".source = "${pkgs.hawck}/share/hawck/LLib";
   };
+
   systemd.user.services = lib.mkIf pkgs.stdenv.isLinux {
     # rnnoise-plugin
     rnnoise = {
@@ -148,8 +156,12 @@ in {
     end
   '';
 
-  programs.direnv.enable = true;
-  programs.direnv.enableNixDirenvIntegration = true;
+  programs.direnv = {
+    enable = true;
+    nix-direnv.enable = true;
+    nix-direnv.enableFlakes = true;
+  };
+
   programs.htop.showCpuFrequency = true;
 
   programs.git = {
