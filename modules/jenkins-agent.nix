@@ -31,9 +31,9 @@ in {
       User = "jenkins";
       Group = "jenkins";
       SupplementaryGroups = [ config.users.groups.keys.name ];
-      ExecStart = "${pkgs.jdk8}/bin/java -jar -Dorg.jenkinsci.plugins.durabletask.BourneShellScript.LAUNCH_DIAGNOSTICS=true ${agentJar} -jnlpUrl https://leroy.tny.town/computer/navi/jenkins-agent.jnlp -secret @${config.sops.secrets.jenkins-secret.path} -workDir ${"/var/lib/jenkins/"}";
+      ExecStart = "${pkgs.adoptopenjdk-hotspot-bin-8}/bin/java -jar -Dorg.jenkinsci.plugins.durabletask.BourneShellScript.LAUNCH_DIAGNOSTICS=true ${agentJar} -jnlpUrl https://leroy.tny.town/computer/navi/jenkins-agent.jnlp -secret @${config.sops.secrets.jenkins-secret.path} -workDir ${"/var/lib/jenkins/"}";
     };
 
-    path = with pkgs; [ bash nixFlakes jdk8 git podman dockerCompat ];
+    path = with pkgs; [ bash nixFlakes adoptopenjdk-hotspot-bin-8 git podman dockerCompat ];
   };
 }
