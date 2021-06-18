@@ -50,6 +50,8 @@
     ];
   });
 
+  java = openjdk8;
+
   SDL = with prev; prev.SDL.overrideAttrs(o: {
     patches = [
       # "${prev.pkgs}/pkgs/development/libraries/SDL/find-headers.patch"
