@@ -21,7 +21,7 @@ in {
 
   powerManagement.cpuFreqGovernor = "schedutil";
   boot.supportedFilesystems = [ "ntfs" ];
-  boot.kernelPackages = pkgs.linuxPackagesOverride unstable.linuxPackages_5_11;
+  boot.kernelPackages = pkgs.linuxPackagesOverride unstable.linuxPackages_5_12;
 
   networking.hostName = "navi";
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -38,7 +38,7 @@ in {
   #networking.wireless.iwd.enable = true;
   networking.useNetworkd = true;
 
-  services.emacs.package = pkgs.emacsPgtk;
+  services.emacs.package = pkgs.emacsPgtkGcc;
   services.emacs.enable = true;
   services.hostapd = {
     enable = false;
@@ -66,16 +66,16 @@ logger_stdout_level=0
   services.printing = {
     enable = true;
     drivers = [
-      #pkgs.canon-cups-ufr2      
-      (let stdenv = pkgs.pkgsi686Linux.stdenv;
+      pkgs.canon-cups-ufr2
+      /*(let stdenv = pkgs.pkgsi686Linux.stdenv;
            i686_NIX_GCC = pkgs.pkgsi686Linux.callPackage ({gcc}: gcc) {}; in
        pkgs.canon-cups-ufr2.overrideAttrs(_: {
         propagatedBuildInputs = (_.propagatedBuildInputs or []) ++ [ stdenv.cc.cc.lib ];
         buildInputs = (_.buildInputs or []) ++ [ stdenv.cc.cc.lib ];
         installPhase = _.installPhase + ''
         patchelf --set-rpath "${stdenv.cc.cc.lib}/lib" $out/lib32/libcaepcm.so.1.0
-'';
-      }))
+      '';
+      }))*/
     ];
   };
 
@@ -170,6 +170,7 @@ logger_stdout_level=0
   };
   
   nixpkgs.config.allowUnfree = true;
+  nixpkgs.config.contentAddressedByDefault = true;
 
   services.corefreq.enable = true;
   environment.systemPackages = with pkgs; [
@@ -185,16 +186,21 @@ logger_stdout_level=0
     mullvad-vpn
   ];
 
+
+  programs.adb.enable = true;
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
   programs.mtr.enable = true;
   networking.wireguard.enable = true;
   services.mullvad-vpn.enable = true;
+  networking.iproute2.enable = lib.mkForce false;
   networking.firewall.checkReversePath = "loose";
 
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
   services.openssh.passwordAuthentication = false;
+
+  services.earlyoom.enable = true;
 
   networking.firewall.enable = true;
   networking.firewall.allowedTCPPorts = [ 54875 54941 8080 27036 27037 ];
