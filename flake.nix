@@ -61,14 +61,32 @@
             autoOptimiseStore = true;
           };
         };
+        system = "x86_64-linux";
+
+        channel-hack = with nixpkgs.legacyPackages.${system};
+          stdenv.mkDerivation rec {
+            name = "nixpkgs-flake-channel-shim";
+            src = [ nixpkgs ];
+
+            buildInputs = [ bash coreutils ];
+
+            # TODO: is this indirection necessary?
+            buildPhase = ''
+              mkdir -p $out
+              cp ${./nixpkgs-flake-channel.nix} $out/default.nix
+            '';
+
+            phases = "buildPhase";
+          };
     in rec {
-      devShell."x86_64-linux" = let pkgs =
-        nixpkgs.legacyPackages."x86_64-linux"; in pkgs.mkShell {
+
+      devShell.${system} = let pkgs =
+        nixpkgs.legacyPackages.${system}; in pkgs.mkShell {
           sopsAgeKeyDirs = [
             ./keys
           ];
           buildInputs = with pkgs; [
-            deploy-rs.defaultPackage."x86_64-linux"
+            deploy-rs.defaultPackage.${system}
             (pkgs.writeShellScriptBin "nrb" "sudo nixos-rebuild -L switch --flake .")
             (pkgs.writeShellScriptBin "hrb" "nix build --show-trace -L .#homeConfigurations.navi.activationPackage && result/activate")
             nixfmt
@@ -88,8 +106,7 @@
         personal = (import ./overlays/overlays.nix);
       };
 
-      legacyPackages =
-        let system = "x86_64-linux";
+      legacyPackages = let
             lpkgs = (import nixpkgs { inherit system; config.allowUnfree = true; });
         in {
           ${system} = (lpkgs // overlays.personal lpkgs lpkgs);
@@ -146,6 +163,14 @@
                 {
                   systemd.services.hawck-inputd.enable = false;
                   # environment.systemPackages = [ inputs.binja.defaultPackage.${system} ];
+                }
+                {
+                  system.activationScripts.channel-hack = ''
+# ln -sfn ${channel-hack} /nix/var/nix/profiles/per-user/root/channels
+echo "installing root channel from flake revision..."
+${nixpkgs.legacyPackages.${system}.nixFlakes}/bin/nix-env --profile /nix/var/nix/profiles/per-user/root/channels --file ${channel-hack} --install --from-expression "f: f { nixpkgs = "${nixpkgs}"; }"
+${nixpkgs.legacyPackages.${system}.nixFlakes}/bin/nix-env --profile /nix/var/nix/profiles/per-user/root/channels --delete-generations old
+'';
                 }
                 inputs.fishcgi.nixosModule
                 ({ config, ... }: {
