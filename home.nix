@@ -307,7 +307,7 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
       };
 
       startup =
-        map (x: { command = x; }) [ "firefox" "emacs" "alacritty" "Discord" ];
+        map (x: { command = x; }) [ "firefox" "emacs" "alacritty" /*"Discord"*/ ];
 
       gaps.inner = 30;
       gaps.outer = 0;
