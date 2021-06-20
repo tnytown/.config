@@ -1,11 +1,13 @@
 { lib, pkgs, config, ... }:
 let unstable = pkgs.unstable;
+    jdk = pkgs.adoptopenjdk-hotspot-bin-16;
+    server = pkgs.minecraft-server-fabric;
 in {
   services.minecraft-server = {
     enable = true;
     eula = true;
     # package = (unstable.papermc.override { jre = pkgs.jdk11; });
-    package = (unstable.minecraft-server.override { jre_headless = pkgs.adoptopenjdk-jre-hotspot-bin-16; });
+    package = server;
     declarative = true;
 
 /*    jvmOpts = "-Xms4G -Xmx4G " +
@@ -17,6 +19,8 @@ in {
       white-list = true;
 	    difficulty = "normal";
       allow-flight = true;
+      enable-rcon = true;
+      "rcon.password" = "hunteringmyhunter2";
     };
 
     whitelist = {
