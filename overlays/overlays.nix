@@ -11,6 +11,7 @@
     };
   });
 
+  minecraft-server-fabric = prev.callPackage ./minecraft-server-fabric {};
   # Begin CA hacks
   a52dec = prev.a52dec.overrideAttrs(o: rec {
     src = prev.fetchurl {
