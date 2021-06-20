@@ -220,11 +220,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1620172909,
-        "narHash": "sha256-xZzr2DVJiUUSZLhphaYQPj6nrVzKO7JxhiH3Nbpjk1s=",
+        "lastModified": 1624186328,
+        "narHash": "sha256-F7IqV1x4QoDToHtQ45BSt2upMtJ671SMWA6DAZSArcM=",
         "owner": "knownunown",
         "repo": "sops-nix",
-        "rev": "4367a064ddabe9fc3eb4b7eb3fe4184888a3c45b",
+        "rev": "e38bee392a5d97e192a198ad5a0f765d7cf8b9b5",
         "type": "github"
       },
       "original": {
