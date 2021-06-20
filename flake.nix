@@ -155,6 +155,7 @@
                 ./configuration.nix
                 ./machines/navi.nix
                 ./modules/security.nix
+                ./modules/initrd-ssh-luks.nix
                 ./modules/corefreq.nix
                 ./modules/desktop.nix
                 ./modules/jenkins-agent.nix
