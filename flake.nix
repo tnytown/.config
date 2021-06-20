@@ -35,49 +35,11 @@
   # https://github.com/nix-community/home-manager/issues/1538#issuecomment-706627100
   outputs = inputs@{ self, nixpkgs, unstable, darwin, sops-nix, rocm, home-manager, deploy-rs, cachix, speedy, ... }:
     let lib = nixpkgs.lib;
-        nixConf = system: useCA: {
-          # Pin flake versions for use with nix shell.
-          nix = {
-            registry = {
-              nixpkgs.flake = nixpkgs;
-              unstable.flake = unstable;
-              s.flake = self;
-              u.flake = unstable;
-            };
-            gc = {
-              automatic = true;
-              dates = "weekly";
-              options = "--delete-older-than 14d";
-            };
-
-            package = nixpkgs.legacyPackages.${system}.nixFlakes;
-            extraOptions = if useCA then ''
-                experimental-features = nix-command flakes ca-references ca-derivations
-                substituters = https://cache.ngi0.nixos.org/
-                trusted-public-keys = cache.ngi0.nixos.org-1:KqH5CBLNSyX184S9BKZJo1LxrxJ9ltnY2uAs5c/f1MA=
-'' else ''
-                experimental-features = nix-command flakes
-'';
-            autoOptimiseStore = true;
-          };
-        };
         system = "x86_64-linux";
-
-        channel-hack = with nixpkgs.legacyPackages.${system};
-          stdenv.mkDerivation rec {
-            name = "nixpkgs-flake-channel-shim";
-            src = [ nixpkgs ];
-
-            buildInputs = [ bash coreutils ];
-
-            # TODO: is this indirection necessary?
-            buildPhase = ''
-              mkdir -p $out
-              cp ${./nixpkgs-flake-channel.nix} $out/default.nix
-            '';
-
-            phases = "buildPhase";
-          };
+        flakePins = {
+          system.nix-flake-config.systemFlake = self;
+          system.nix-flake-config.nixpkgsFlake = nixpkgs;
+        };
     in rec {
 
       devShell.${system} = let pkgs =
@@ -141,6 +103,13 @@
               inherit system;
 
               modules = [
+                ./modules/nix-flake-config.nix
+                flakePins
+                {
+                  # boom
+                  system.nix-flake-config.useCA = true;
+                }
+
                 (import cachix)
                 {
                   cachix = [
@@ -148,7 +117,6 @@
 		                { name = "nix-community"; sha256 = "1r0dsyhypwqgw3i5c2rd5njay8gqw9hijiahbc2jvf0h52viyd9i"; }
                   ];
                 }
-                (nixConf system true)
                 # cachix
                 { nixpkgs.overlays = self.overlaysList ++ [(import rocm) inputs.emacs.overlay]; }
 
@@ -164,14 +132,6 @@
                 {
                   systemd.services.hawck-inputd.enable = false;
                   # environment.systemPackages = [ inputs.binja.defaultPackage.${system} ];
-                }
-                {
-                  system.activationScripts.channel-hack = ''
-# ln -sfn ${channel-hack} /nix/var/nix/profiles/per-user/root/channels
-echo "installing root channel from flake revision..."
-${nixpkgs.legacyPackages.${system}.nixFlakes}/bin/nix-env --profile /nix/var/nix/profiles/per-user/root/channels --file ${channel-hack} --install --from-expression "f: f { nixpkgs = "${nixpkgs}"; }"
-${nixpkgs.legacyPackages.${system}.nixFlakes}/bin/nix-env --profile /nix/var/nix/profiles/per-user/root/channels --delete-generations old
-'';
                 }
                 inputs.fishcgi.nixosModule
                 ({ config, ... }: {
@@ -219,7 +179,9 @@ ${nixpkgs.legacyPackages.${system}.nixFlakes}/bin/nix-env --profile /nix/var/nix
               inherit system;
 
               modules = [
-                (nixConf system true)
+                ./modules/nix-flake-config.nix
+                flakePins
+
                 {
                   nixpkgs.overlays = self.overlaysList;
                 }
@@ -242,7 +204,8 @@ ${nixpkgs.legacyPackages.${system}.nixFlakes}/bin/nix-env --profile /nix/var/nix
 
           config = darwin.lib.darwinSystem {
             modules = [
-              (nixConf system false)
+              ./modules/nix-flake-config.nix
+              flakePins
               ./darwin-configuration.nix
             ];
           };

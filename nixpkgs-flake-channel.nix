@@ -1,7 +1,6 @@
-{ nixpkgs }:
+{ nixpkgs, system ? builtins.currentSystem, useCA ? false }:
 let
-  pkgs = (import nixpkgs {});
-  system = builtins.currentSystem;
+  pkgs = import nixpkgs { inherit system; config.contentAddressedByDefault = useCA; };
   drv = { lib, bash, coreutils }: derivation {
     inherit system;
     name = "nixpkgs-flake-channel";
