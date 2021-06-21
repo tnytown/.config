@@ -13,7 +13,7 @@ in rec {
   };
 
   users.users.root.openssh.authorizedKeys.keys =
-    let ssh-keys-for = (import ../keys/ssh-keys.nix { inherit lib; });
+    let ssh-keys-for = (import ./keys/ssh-keys.nix { inherit lib; });
     in ssh-keys-for config.networking.hostName;
 
   services.nginx.enable = true;
