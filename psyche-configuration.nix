@@ -1,4 +1,4 @@
-{ pkgs, config, modulesPath, ... }:
+{ config, lib, pkgs, modulesPath, ... }:
 let unstable = pkgs.unstable;
 in rec {
   imports = [
