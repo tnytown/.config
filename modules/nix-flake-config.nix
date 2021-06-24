@@ -43,28 +43,32 @@ in {
 
   # Pin flake versions for use with nix shell.
   config = mkIf cfg.enable {
-    nix = {
-      registry = {
-        nixpkgs.flake = cfg.nixpkgsFlake;
-        s.flake = cfg.systemFlake;
-      };
+    nix = mkMerge [
+      {
+        registry = {
+          nixpkgs.flake = cfg.nixpkgsFlake;
+          s.flake = cfg.systemFlake;
+        };
 
-      gc = {
-        automatic = true;
-        dates = "weekly";
-        options = "--delete-older-than 14d";
-      };
+        gc = {
+          automatic = true;
+          options = "--delete-older-than 14d";
+        };
 
-      package = pkgs.nixUnstable;
-      extraOptions = if cfg.useCA then ''
+        package = pkgs.nixUnstable;
+        extraOptions = if cfg.useCA then ''
         experimental-features = nix-command flakes ca-references ca-derivations
         substituters = https://cache.nixos.org/ https://cache.ngi0.nixos.org/
         trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= cache.ngi0.nixos.org-1:KqH5CBLNSyX184S9BKZJo1LxrxJ9ltnY2uAs5c/f1MA=
       '' else ''
         experimental-features = nix-command flakes
       '';
-      autoOptimiseStore = true;
-    };
+      }
+      (optionalAttrs (lib.traceVal pkgs.stdenv.isLinux) {
+        autoOptimiseStore = true;
+        gc.dates = "weekly";
+      })
+    ];
 
     # strap in for the smoke and mirrors
     system.activationScripts.channel-shim = let
