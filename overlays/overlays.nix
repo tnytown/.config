@@ -1,4 +1,4 @@
-(final: prev: let uprev = prev.unstable; in rec {
+(final: prev: rec {
   flashrom = prev.flashrom.overrideAttrs(o: {
     version = "git";
     nativeBuildInputs = o.nativeBuildInputs ++ [ prev.git prev.cmocka ];
@@ -240,7 +240,7 @@
     };
   };
 
-  git-credential-keepassxc = let prev = final.unstable; in prev.rustPlatform.buildRustPackage rec {
+  git-credential-keepassxc = prev.rustPlatform.buildRustPackage rec {
     pname = "git-credential-keepassxc";
     version = "0.4.3";
 

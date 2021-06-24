@@ -2,6 +2,8 @@
   description = "{system, home} configuration flake";
 
   inputs = {
+    flake-utils.url = "github:numtide/flake-utils";
+
     # Track an arbitrary unstable revision that I like.
     unstable.url = "nixpkgs/nixpkgs-unstable";
     nixpkgs.follows = "unstable";
@@ -33,8 +35,8 @@
 
   # Cargo culted.
   # https://github.com/nix-community/home-manager/issues/1538#issuecomment-706627100
-  outputs = inputs@{ self, nixpkgs, unstable, darwin, sops-nix, rocm
-    , home-manager, deploy-rs, cachix, speedy, ... }:
+  outputs = inputs@{ self, flake-utils, nixpkgs, unstable, darwin, sops-nix
+    , rocm, home-manager, deploy-rs, cachix, speedy, ... }:
     let
       lib = nixpkgs.lib;
       system = "x86_64-linux";
@@ -42,212 +44,216 @@
         system.nix-flake-config.systemFlake = self;
         system.nix-flake-config.nixpkgsFlake = nixpkgs;
       };
-    in rec {
+    in flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ] (system:
+      let pkgs = nixpkgs.legacyPackages.${system};
+      in rec {
+        devShell = pkgs.mkShell {
+          sopsAgeKeyDirs = [ ./keys ];
+          buildInputs = with pkgs; [
+            deploy-rs.defaultPackage.${system}
+            (pkgs.writeShellScriptBin "nrb"
+              "sudo nixos-rebuild -L switch --flake .")
+            (pkgs.writeShellScriptBin "hrb"
+              "nix build --show-trace -L .#homeConfigurations.navi.activationPackage && result/activate")
+            nixfmt
 
-      devShell.${system} = let pkgs = nixpkgs.legacyPackages.${system};
-      in pkgs.mkShell {
-        sopsAgeKeyDirs = [ ./keys ];
-        buildInputs = with pkgs; [
-          deploy-rs.defaultPackage.${system}
-          (pkgs.writeShellScriptBin "nrb"
-            "sudo nixos-rebuild -L switch --flake .")
-          (pkgs.writeShellScriptBin "hrb"
-            "nix build --show-trace -L .#homeConfigurations.navi.activationPackage && result/activate")
-          nixfmt
+            (pkgs.callPackage sops-nix { }).sops-age-hook
+          ];
+        };
+        overlays = {
+          /* TODO(tny): unstable = stable in the interim. This overlay is causing
+              * problems, so I'm disabling it.
+             unstable = (final: prev: rec {
+               # overlay unstable into our stable nixpkgs set.
+               unstable = import inputs.unstable {
+                 system = final.system;
 
-          (pkgs.callPackage sops-nix { }).sops-age-hook
-        ];
-      };
-      overlays = {
-        unstable = (final: prev: rec {
-          # overlay unstable into our stable nixpkgs set.
-          unstable = import inputs.unstable {
-            system = final.system;
+                 config.allowUnfree = true;
+               };
+             });
+          */
+          personal = (import ./overlays/overlays.nix);
+        };
 
+        legacyPackages = let
+          lpkgs = (import nixpkgs {
+            inherit system;
             config.allowUnfree = true;
+          });
+        in (lpkgs // overlays.personal lpkgs lpkgs);
+      }) // rec {
+        overlaysList = system:
+          lib.mapAttrsToList (s: t: t) self.overlays.${system};
+
+        # this is factored out to account for the disparate home directory locations that I deal with,
+        # namely macOS's /Users vs traditionally Linux's /home.
+        homeConfiguration = { system, config, homeDirectory, username ? "tny" }:
+          home-manager.lib.homeManagerConfiguration {
+            inherit system homeDirectory username;
+            configuration = {
+              nixpkgs.overlays = overlaysList system;
+              imports = [ ./home.nix ];
+            };
           };
-        });
-        personal = (import ./overlays/overlays.nix);
-      };
 
-      legacyPackages = let
-        lpkgs = (import nixpkgs {
-          inherit system;
-          config.allowUnfree = true;
-        });
-      in { ${system} = (lpkgs // overlays.personal lpkgs lpkgs); };
+        machines = {
+          navi = rec {
+            system = "x86_64-linux";
 
-      overlaysList = lib.mapAttrsToList (s: t: t) self.overlays;
+            config = let
+              mkModule = path:
+                (args@{ config, lib, pkgs, ... }:
+                  import path ({
+                    # is there a better way to do this?
+                    pkgs = import inputs.unstable { inherit system; };
+                  } // removeAttrs args [ "pkgs" ]));
+            in nixpkgs.lib.nixosSystem {
+              inherit system;
 
-      # this is factored out to account for the disparate home directory locations that I deal with,
-      # namely macOS's /Users vs traditionally Linux's /home.
-      homeConfiguration = { system, config, homeDirectory, username ? "tny" }:
-        home-manager.lib.homeManagerConfiguration {
-          inherit system homeDirectory username;
-          configuration = {
-            nixpkgs.overlays = overlaysList;
-            imports = [ ./home.nix ];
-          };
-        };
+              modules = [
+                ./modules/nix-flake-config.nix
+                flakePins
+                {
+                  # boom
+                  system.nix-flake-config.useCA = true;
+                }
 
-      machines = {
-        navi = rec {
-          system = "x86_64-linux";
+                (import cachix)
+                {
+                  cachix = [
+                    {
+                      name = "nixos-rocm";
+                      sha256 =
+                        "1l2g8l55b6jzb84m2dcpf532rm7p2g4dl56j3pbrfm03j54sg0v0";
+                    }
+                    {
+                      name = "nix-community";
+                      sha256 =
+                        "1r0dsyhypwqgw3i5c2rd5njay8gqw9hijiahbc2jvf0h52viyd9i";
+                    }
+                  ];
+                }
+                # cachix
+                {
+                  nixpkgs.overlays = self.overlaysList system
+                    ++ [ (import rocm) inputs.emacs.overlay ];
+                }
 
-          config = let
-            mkModule = path:
-              (args@{ config, lib, pkgs, ... }:
-                import path ({
-                  # is there a better way to do this?
-                  pkgs = import inputs.unstable { inherit system; };
-                } // removeAttrs args [ "pkgs" ]));
-          in nixpkgs.lib.nixosSystem {
-            inherit system;
-
-            modules = [
-              ./modules/nix-flake-config.nix
-              flakePins
-              {
-                # boom
-                system.nix-flake-config.useCA = true;
-              }
-
-              (import cachix)
-              {
-                cachix = [
-                  {
-                    name = "nixos-rocm";
-                    sha256 =
-                      "1l2g8l55b6jzb84m2dcpf532rm7p2g4dl56j3pbrfm03j54sg0v0";
-                  }
-                  {
-                    name = "nix-community";
-                    sha256 =
-                      "1r0dsyhypwqgw3i5c2rd5njay8gqw9hijiahbc2jvf0h52viyd9i";
-                  }
-                ];
-              }
-              # cachix
-              {
-                nixpkgs.overlays = self.overlaysList
-                  ++ [ (import rocm) inputs.emacs.overlay ];
-              }
-
-              ./configuration.nix
-              ./machines/navi.nix
-              ./modules/security.nix
-              ./modules/initrd-ssh-luks.nix
-              ./modules/corefreq.nix
-              ./modules/desktop.nix
-              ./modules/jenkins-agent.nix
-              ./modules/minecraft-server.nix
-              sops-nix.nixosModules.sops
-              {
-                systemd.services.hawck-inputd.enable = false;
-                # environment.systemPackages = [ inputs.binja.defaultPackage.${system} ];
-              }
-              inputs.fishcgi.nixosModule
-              ({ config, ... }: {
-                services.nginx.enable = true;
-                services.fishcgi.enable = true;
-                services.nginx.virtualHosts."localhost" = {
-                  default = true;
-                  root = "/var/lib/fishcgi/";
-                  locations."/".index = "index.fish";
-                  locations."~ .fish$" = {
-                    extraConfig = ''
-                      # try_files $uri =404;
-                      fastcgi_pass unix:${config.services.fishcgi.socket};
-                      fastcgi_index ${config.services.fishcgi.example};
-                      include ${config.services.nginx.package}/conf/fastcgi_params;
-                      include ${config.services.nginx.package}/conf/fastcgi.conf;
-                    '';
+                ./configuration.nix
+                ./machines/navi.nix
+                ./modules/security.nix
+                ./modules/initrd-ssh-luks.nix
+                ./modules/corefreq.nix
+                ./modules/desktop.nix
+                ./modules/jenkins-agent.nix
+                ./modules/minecraft-server.nix
+                sops-nix.nixosModules.sops
+                {
+                  systemd.services.hawck-inputd.enable = false;
+                  # environment.systemPackages = [ inputs.binja.defaultPackage.${system} ];
+                }
+                inputs.fishcgi.nixosModule
+                ({ config, ... }: {
+                  services.nginx.enable = true;
+                  services.fishcgi.enable = true;
+                  services.nginx.virtualHosts."localhost" = {
+                    default = true;
+                    root = "/var/lib/fishcgi/";
+                    locations."/".index = "index.fish";
+                    locations."~ .fish$" = {
+                      extraConfig = ''
+                        # try_files $uri =404;
+                        fastcgi_pass unix:${config.services.fishcgi.socket};
+                        fastcgi_index ${config.services.fishcgi.example};
+                        include ${config.services.nginx.package}/conf/fastcgi_params;
+                        include ${config.services.nginx.package}/conf/fastcgi.conf;
+                      '';
+                    };
                   };
-                };
-                networking.firewall.allowedTCPPorts = [ 80 ];
-              })
-            ];
+                  networking.firewall.allowedTCPPorts = [ 80 ];
+                })
+              ];
+            };
+
+            home = homeConfiguration {
+              inherit system config;
+
+              homeDirectory = "/home/tny/";
+            };
           };
 
-          home = homeConfiguration {
-            inherit system config;
+          psyche = rec {
+            #ignore = true;
+            system = "x86_64-linux";
 
-            homeDirectory = "/home/tny/";
+            config = let
+              mkModule = path:
+                (args@{ config, lib, pkgs, ... }:
+                  import path ({
+                    # is there a better way to do this?
+                    pkgs = import inputs.unstable { inherit system; };
+                  } // removeAttrs args [ "pkgs" ]));
+            in nixpkgs.lib.nixosSystem {
+              inherit system;
+
+              modules = [
+                ./modules/nix-flake-config.nix
+                flakePins
+
+                { nixpkgs.overlays = self.overlaysList system; }
+                {
+                  fileSystems."/" = {
+                    device = "/dev/disk/by-label/root";
+                    fsType = "btrfs";
+                  };
+                  boot.loader.grub.device = "/dev/vda";
+                }
+                speedy.nixosModule
+
+                ./psyche-configuration.nix
+              ];
+            };
+          };
+
+          venus = rec {
+            system = "x86_64-darwin";
+
+            config = darwin.lib.darwinSystem {
+              modules = [
+                ./modules/nix-flake-config.nix
+                flakePins
+                ./darwin-configuration.nix
+              ];
+            };
+
+            home = homeConfiguration {
+              inherit system config;
+
+              homeDirectory = "/Users/apan/";
+            };
           };
         };
 
-        psyche = rec {
-          #ignore = true;
-          system = "x86_64-linux";
+        # cachix = (import inputs.cachix);
+        darwinConfigurations = (builtins.mapAttrs (k: v: v.config)
+          (lib.filterAttrs (k: v: lib.hasSuffix "darwin" v.system) machines));
+        nixosConfigurations = (builtins.mapAttrs (k: v: v.config)
+          (lib.filterAttrs
+            (k: v: lib.hasSuffix "linux" v.system && !(v ? ignore)) machines));
+        homeConfigurations = builtins.mapAttrs (k: v: v.home) machines;
 
-          config = let
-            mkModule = path:
-              (args@{ config, lib, pkgs, ... }:
-                import path ({
-                  # is there a better way to do this?
-                  pkgs = import inputs.unstable { inherit system; };
-                } // removeAttrs args [ "pkgs" ]));
-          in nixpkgs.lib.nixosSystem {
-            inherit system;
-
-            modules = [
-              ./modules/nix-flake-config.nix
-              flakePins
-
-              { nixpkgs.overlays = self.overlaysList; }
-              {
-                fileSystems."/" = {
-                  device = "/dev/disk/by-label/root";
-                  fsType = "btrfs";
-                };
-                boot.loader.grub.device = "/dev/vda";
-              }
-              speedy.nixosModule
-
-              ./psyche-configuration.nix
-            ];
+        deploy.nodes.psyche = {
+          sshUser = "root";
+          hostname = "psyche.tny.town";
+          profiles.system = {
+            user = "root";
+            path = builtins.trace (deploy-rs.lib.x86_64-linux.activate.nixos
+              self.machines.psyche.config).outPath
+              (deploy-rs.lib.x86_64-linux.activate.nixos
+                self.machines.psyche.config);
           };
         };
 
-        venus = rec {
-          system = "x86_64-darwin";
-
-          config = darwin.lib.darwinSystem {
-            modules = [
-              ./modules/nix-flake-config.nix
-              flakePins
-              ./darwin-configuration.nix
-            ];
-          };
-
-          home = homeConfiguration {
-            inherit system config;
-
-            homeDirectory = "/Users/apan/";
-          };
-        };
+        # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
       };
-
-      # cachix = (import inputs.cachix);
-      darwinConfigurations = (builtins.mapAttrs (k: v: v.config)
-        (lib.filterAttrs (k: v: lib.hasSuffix "darwin" v.system) machines));
-      nixosConfigurations = (builtins.mapAttrs (k: v: v.config)
-        (lib.filterAttrs (k: v: lib.hasSuffix "linux" v.system && !(v ? ignore))
-          machines));
-      homeConfigurations = builtins.mapAttrs (k: v: v.home) machines;
-
-      deploy.nodes.psyche = {
-        sshUser = "root";
-        hostname = "psyche.tny.town";
-        profiles.system = {
-          user = "root";
-          path = builtins.trace (deploy-rs.lib.x86_64-linux.activate.nixos
-            self.machines.psyche.config).outPath
-            (deploy-rs.lib.x86_64-linux.activate.nixos
-              self.machines.psyche.config);
-        };
-      };
-
-      # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
-    };
 }
