@@ -1,7 +1,5 @@
-{ config, pkgs, lib, ... }:
-
-let upkgs = pkgs.unstable;
-in {
+{ config, lib, pkgs, ... }:
+{
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
@@ -24,7 +22,7 @@ in {
 
     pkgs.direnv
 
-    upkgs.just
+    pkgs.just
     pkgs.git-credential-keepassxc
     pkgs.rust-analyzer
 
@@ -35,13 +33,13 @@ in {
     # pkgs.openrgb
     pkgs.zip
     pkgs.unzip
-    upkgs.osu-lazer
 
     pkgs.ffmpeg
     pkgs.exiftool
-    upkgs.python3Packages.binwalk
+    pkgs.python3Packages.binwalk
   ] ++ (if pkgs.stdenv.isLinux then [
     # pkgs.jetbrains.idea-ultimate
+    pkgs.osu-lazer
     pkgs.rnnoise-plugin
 
     ((pkgs.multimc.overrideAttrs(o: { postInstall = o.postInstall + ''
@@ -55,11 +53,11 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
 
     pkgs.gnome3.gnome-shell-extensions
     pkgs.nordic
-    upkgs.openrgb
+    pkgs.openrgb
     pkgs.pavucontrol
     pkgs.keepassxc
     # pkgs.emacsPgtkGcc
-    upkgs.spotify
+    pkgs.spotify
     pkgs.slack
     pkgs.discord
     # pkgs.ppsspp
@@ -108,7 +106,7 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
           set -euf -o pipefail
 
           export LV2_PATH=${pkgs.rnnoise-plugin}/lib/lv2/
-          pw='${pkgs.unstable.pipewire}/bin'
+          pw='${pkgs.pipewire}/bin'
           pwjack=$pw'/pw-jack'
           pwcli=$pw'/pw-cli'
           pwdump=$pw'/pw-dump -N'
@@ -202,129 +200,12 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
     "org/gnome/shell/extensions/user-theme" = { name = "Nordic"; };
   };
 
-  wayland.windowManager.sway = let
-    pb = pkg: "${pkgs.${pkg}}/bin/${pkg}";
-    mod = "Mod1";
-  in {
-    enable = true;
-    package = null;
-    config = {
-      modifier = mod;
+  imports = let
+    # c = { inherit (pkgs.hostPlatform) isLinux isDarwin; };
+    mod = path: cond: { inherit path cond; };
+    mods = [
+      (mod ./modules/hm/desktop.nix false)
 
-      bars = [{
-        colors = {
-          background = "#000000a0";
-        };
-        mode = "dock";
-        position = "top";
-        #statusCommand = "${pkgs.sway}/bin/swaybar";
-        statusCommand = (pkgs.writeScript "swaystatus" ''
-          set -euo pipefail
-
-          function n() {
-                ip -j -s link | jq -r 'reduce (.. | .bytes? | select(. != null)) as $i (0; . + $i)'
-          }
-
-          np=`n`
-          while true; do
-                sleep 1;
-                np_o="$np"
-                np=`n`
-                echo \
-                     'load:' $(uptime | sed -E 's/.*load average: ([^ ]+),.*/\1/')'x' '|' \
-                     'cpu:' $(sensors -j 'k10temp-pci-*' | jq '.. | .Tdie?.temp2_input | select(. != null) | floor')'C' '|' \
-                     'mem:' $(free -mh | awk 'NR == 2 {print $3}') '|' \
-                     'net:' "$(echo $(( $np - $np_o )) | numfmt --to=iec-i --padding=5)" '|' \
-                     $(date +'%Y-%m-%d %H:%M:%S');
-          done
-        '').outPath;
-        fonts = [ "monospace 10" ];
-      }];
-      keybindings = {
-        "${mod}+Shift+j" = "focus left";
-        "${mod}+Shift+k" = "focus right";
-        "${mod}+Shift+h" = "resize shrink width 10px";
-        "${mod}+Shift+l" = "resize grow width 10px";
-        "${mod}+Return" = "exec ${pb "alacritty"}";
-        "Mod4+q" = "kill";
-        "Mod4+l" = "exec swaylock -F -i ~/Pictures/bg_gw_city_snow_night.jpg";
-
-        "Ctrl+Mod4+Shift+4" = "exec ${
-            pkgs.writeScript "screenshot.sh" ''
-              slurp | grim -g - - | wl-copy -t 'image/png'
-            ''
-          }";
-        "Mod4+Space" = ''
-          exec ${pb "j4-dmenu-desktop"} --dmenu="${pb "bemenu"} -i" --term="${
-            pb "alacritty"
-          }"
-        '';
-        "Mod4+Shift+f" = "fullscreen toggle";
-      } // builtins.listToAttrs (builtins.concatLists (map (s:
-        let x = builtins.toString s.fst;
-        in [
-          {
-            name = "Ctrl+${x}";
-            value = "workspace \"${x}: ${s.snd}\"";
-          }
-          {
-            name = "Ctrl+Shift+${x}";
-            value = "move to workspace \"${x}: ${s.snd}\"";
-          }
-        ]) (lib.zipLists (lib.range 1 5) [ "web" "dev" "" "" "chat" ])));
-
-      output = {
-        # L
-        "DP-1" = {
-          position = "0 0";
-          mode = "2560x1440@119.998Hz";
-          enable = "";
-        };
-        # R
-        "DP-2" = {
-          position = "2560 0";
-          mode = "1920x1200@59.950Hz";
-          enable = "";
-        };
-        # headset
-        "HDMI-A-1" = { disable = ""; };
-
-        # global
-        "*" = { bg = "~/Pictures/bg_gw_city_snow_night.jpg fill"; };
-      };
-
-      input = {
-        "1386:770:Wacom_Intuos_PT_S_Pen" = {
-          map_to_output = "DP-1";
-          map_from_region = "0.0x0.0 0.203x0.267";
-        };
-      };
-
-      assigns = {
-        "1: web" = [{ app_id = "^firefox$"; }];
-        "2: dev" = [ { app_id = "^Alacritty$"; } { app_id = "^emacs$"; } ];
-        "5: chat" = [{ class = "^discord$"; }];
-      };
-
-      startup =
-        map (x: { command = x; }) [ "firefox" "emacs" "alacritty" /*"Discord"*/ ];
-
-      gaps.inner = 30;
-      gaps.outer = 0;
-    };
-
-    extraConfig =
-      let lockCmd = "pgrep swaylock || swaylock -F -i ~/Pictures/bg_gw_city_snow_night.jpg";
-      in ''
-      # weird hack: assignment for firefox doesn't name it correctly
-      # also: rename command is invalid in config ??
-      exec swaymsg rename workspace 1 to "1: web"
-      workspace "5: chat" output DP-2
-      exec swayidle -w \
-          timeout 300 '${lockCmd}' \
-          timeout 315 'swaymsg "output * dpms off"' resume 'swaymsg "output * dpms on"' \
-          before-sleep '${lockCmd}'
-    '';
-    systemdIntegration = true;
-  };
+    ];
+  in builtins.filter (x: x.cond) mods;
 }
