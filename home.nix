@@ -205,7 +205,7 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
     mod = path: cond: { inherit path cond; };
     mods = [
       (mod ./modules/hm/desktop.nix false)
-
+      (mod ./modules/hm/ext-ssh.nix true)
     ];
-  in builtins.filter (x: x.cond) mods;
+  in map (x: x.path) (builtins.filter (x: x.cond) mods);
 }
