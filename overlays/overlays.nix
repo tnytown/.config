@@ -28,7 +28,8 @@
       (prev.fetchpatch {
         name = "CVE-2017-2887";
         url = "https://github.com/libsdl-org/SDL_image/commit/e7723676825cd2b2ffef3316ec1879d7726618f2.diff";
-        sha256 = "sha256-SOPCmo6XHFs0gFj3YW1zMIpyQcvXyMpiHtqxu9j/8dM=";
+        sha256 = "sha256-Z0nyEtE1LNGsGsN9SFG8ZyPDdunmvg81tUnEkrJQk5w=";
+        includes = [ "IMG_xcf.c" ];
       })
     ];
   });
