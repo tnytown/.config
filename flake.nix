@@ -52,9 +52,9 @@
           buildInputs = with pkgs; [
             deploy-rs.defaultPackage.${system}
             (pkgs.writeShellScriptBin "nrb"
-              "sudo nixos-rebuild -L switch --flake .")
+              "sudo nixos-rebuild $@ -L switch --flake .")
             (pkgs.writeShellScriptBin "hrb"
-              "nix build --show-trace -L .#homeConfigurations.navi.activationPackage && result/activate")
+              "nix build $@ -L .#homeConfigurations.navi.activationPackage && result/activate")
             nixfmt
 
             (pkgs.callPackage sops-nix { }).sops-age-hook
