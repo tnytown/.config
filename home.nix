@@ -84,11 +84,6 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
     pkgs.wl-clipboard
   ] else [ ]);
 
-  xdg.configFile = lib.mkIf pkgs.stdenv.isLinux {
-    /*"obs-studio/plugins/wlrobs".source =
-      "${pkgs.obs-wlrobs}/share/obs/obs-plugins/wlrobs";*/
-  };
-
   xdg.dataFile = lib.mkIf pkgs.stdenv.isLinux {
     "hawck/scripts/LLib".source = "${pkgs.hawck}/share/hawck/LLib";
   };
@@ -189,6 +184,9 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
   };
 
   programs.alacritty.enable = true;
+  xdg.configFile."alacritty".source = ./alacritty;
+  xdg.configFile."obs-studio/plugins/wlrobs".source = lib.mkIf pkgs.stdenv.isLinux "${pkgs.obs-wlrobs}/share/obs/obs-plugins/wlrobs";
+
   #programs.alacritty.settings = ''
   #
   #'';
@@ -204,8 +202,8 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
     # c = { inherit (pkgs.hostPlatform) isLinux isDarwin; };
     mod = path: cond: { inherit path cond; };
     mods = [
-      (mod ./modules/hm/desktop.nix false)
-      (mod ./modules/hm/ext-ssh.nix true)
+      (mod ./modules/hm/desktop.nix true)
+      (mod ./modules/hm/ext-ssh.nix false)
     ];
   in map (x: x.path) (builtins.filter (x: x.cond) mods);
 }
