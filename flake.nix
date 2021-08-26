@@ -113,10 +113,6 @@
               modules = [
                 ./modules/nix-flake-config.nix
                 flakePins
-                {
-                  # boom
-                  system.nix-flake-config.useCA = true;
-                }
 
                 (import cachix)
                 {
