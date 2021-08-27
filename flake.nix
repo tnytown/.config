@@ -31,6 +31,9 @@
     fishcgi.url = "/home/tny/dev/fish-cgi/";
     binja.url = "/home/tny/re/";
     binja.inputs.nixpkgs.follows = "nixpkgs";
+
+    mhctf.url = "/home/tny/dev/logo";
+    mhctf.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   # Cargo culted.
@@ -206,6 +209,7 @@
                   boot.loader.grub.device = "/dev/vda";
                 }
                 speedy.nixosModule
+                inputs.mhctf.nixosModule
 
                 ./psyche-configuration.nix
               ];
