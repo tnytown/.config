@@ -211,13 +211,4 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
     "org/gnome/desktop/wm/preferences" = { theme = "Nordic"; };
     "org/gnome/shell/extensions/user-theme" = { name = "Nordic"; };
   };
-
-  imports = let
-    # c = { inherit (pkgs.hostPlatform) isLinux isDarwin; };
-    mod = path: cond: { inherit path cond; };
-    mods = [
-      (mod ./modules/hm/desktop.nix true)
-      (mod ./modules/hm/ext-ssh.nix false)
-    ];
-  in map (x: x.path) (builtins.filter (x: x.cond) mods);
 }

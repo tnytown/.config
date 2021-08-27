@@ -87,12 +87,12 @@
 
         # this is factored out to account for the disparate home directory locations that I deal with,
         # namely macOS's /Users vs traditionally Linux's /home.
-        homeConfiguration = { system, config, homeDirectory, username ? "tny" }:
+        homeConfiguration = { system, config, homeDirectory, username ? "tny" , extraImports ? [] }:
           home-manager.lib.homeManagerConfiguration {
             inherit system homeDirectory username;
             configuration = {
               nixpkgs.overlays = overlaysList system;
-              imports = [ ./home.nix ];
+              imports = [ ./home.nix ] ++ extraImports;
             };
           };
 
@@ -175,6 +175,7 @@
               inherit system config;
 
               homeDirectory = "/home/tny/";
+              extraImports = [ ./modules/hm/desktop.nix ];
             };
           };
 
@@ -226,6 +227,7 @@
               inherit system config;
 
               homeDirectory = "/Users/apan/";
+              extraImports = [ ./modules/hm/ext-ssh.nix ];
             };
           };
         };
