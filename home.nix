@@ -88,6 +88,11 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
     "hawck/scripts/LLib".source = "${pkgs.hawck}/share/hawck/LLib";
   };
 
+  programs.obs-studio = {
+    enable = true;
+    plugins = with pkgs.obs-studio-plugins; [ wlrobs obs-gstreamer ];
+  };
+
   systemd.user.services = lib.mkIf pkgs.stdenv.isLinux {
     # rnnoise-plugin
     rnnoise = {
@@ -185,7 +190,12 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
 
   programs.alacritty.enable = true;
   xdg.configFile."alacritty".source = ./alacritty;
-  xdg.configFile."obs-studio/plugins/wlrobs".source = lib.mkIf pkgs.stdenv.isLinux "${pkgs.obs-wlrobs}/share/obs/obs-plugins/wlrobs";
+  # xdg.configFile."obs-studio/plugins/wlrobs".source = lib.mkIf pkgs.stdenv.isLinux "${pkgs.obs-wlrobs}/share/obs/obs-plugins/wlrobs";
+
+
+  xdg.configFile."libvirt/libvirt.conf".source = (pkgs.writeText) "libvirt.conf" ''
+    uri_default = "qemu:///system"
+  '';
 
   #programs.alacritty.settings = ''
   #
