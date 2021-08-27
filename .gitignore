@@ -1,6 +1,13 @@
 *
+
+# base
 !.gitignore
+
+# unignore folders
+!overlays/
+!modules/
+!modules/hm
+
+# unignore files
 !*.nix
-!nixpkgs/
-!nixpkgs/modules
 !*.yml
