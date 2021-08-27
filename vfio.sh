@@ -1,5 +1,5 @@
 #!/usr/bin/env nix-shell
-#!nix-shell -i bash -p pciutils swtpm
+#!nix-shell -i bash -p pciutils
 
 guest_is_on() {
     ! virsh dominfo trampoline | grep -i 'shut off' >/dev/null
