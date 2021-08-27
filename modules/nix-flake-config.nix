@@ -58,13 +58,13 @@ in {
         package = pkgs.nixUnstable;
         extraOptions = if cfg.useCA then ''
         experimental-features = nix-command flakes ca-references ca-derivations
-        substituters = https://cache.nixos.org/ https://cache.ngi0.nixos.org/
-        trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= cache.ngi0.nixos.org-1:KqH5CBLNSyX184S9BKZJo1LxrxJ9ltnY2uAs5c/f1MA=
+        substituters = https://cache.ngi0.nixos.org/ https://cache.nixos.org/
+        trusted-public-keys = cache.ngi0.nixos.org-1:KqH5CBLNSyX184S9BKZJo1LxrxJ9ltnY2uAs5c/f1MA= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
       '' else ''
         experimental-features = nix-command flakes
       '';
       }
-      (optionalAttrs (lib.traceVal pkgs.stdenv.isLinux) {
+      (optionalAttrs pkgs.stdenv.isLinux {
         autoOptimiseStore = true;
         gc.dates = "weekly";
       })
