@@ -41,6 +41,7 @@
     # pkgs.jetbrains.idea-ultimate
     pkgs.osu-lazer
     pkgs.rnnoise-plugin
+    pkgs.obsidian
 
     ((pkgs.multimc.overrideAttrs(o: { postInstall = o.postInstall + ''
 	wrapProgram $out/bin/multimc --prefix PATH : ${lib.makeBinPath [
@@ -53,6 +54,8 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
 
     pkgs.gnome3.gnome-shell-extensions
     pkgs.nordic
+    pkgs.gnome3.adwaita-icon-theme
+
     pkgs.openrgb
     pkgs.pavucontrol
     pkgs.keepassxc
@@ -65,13 +68,14 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
     pkgs.chromium
     pkgs.mpv
     pkgs.lutris
-    # pkgs.slic3r-prusa3d
+    pkgs.prusa-slicer
     pkgs.openscad
-    #pkgs.obs-studio
+
     pkgs.shotcut
     pkgs.qjackctl
     pkgs.jalv
     pkgs.lilv
+
     pkgs.xsel
     pkgs.cntr
 
