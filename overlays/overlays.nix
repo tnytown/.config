@@ -1,4 +1,13 @@
 (final: prev: rec {
+  factorio = prev.factorio.overrideAttrs(o: rec {
+    version = "1.1.36";
+    name = "factorio-${version}";
+    src = prev.fetchurl {
+      url = "http://localhost";
+      name = "factorio_alpha_x64_1.1.36.tar.xz";
+      sha256 = "sha256-iPPHSYCGo4g1UY6pCgi+wEtIQF9sodcp5gqvbzYVKvU=";
+    };
+  });
   flashrom = prev.flashrom.overrideAttrs(o: {
     version = "git";
     nativeBuildInputs = o.nativeBuildInputs ++ [ prev.git prev.cmocka ];
@@ -324,13 +333,24 @@ substituteInPlace meson.build --replace "join_paths(get_option('prefix'),get_opt
     };
   });
 
+  swayidle = prev.swayidle.overrideAttrs(o: {
+    pname = "swayidle";
+    version = "1.8";
+    src = prev.fetchFromGitHub {
+      owner = "swaywm";
+      repo = "swayidle";
+      rev = "0467c1e03a5780ed8e3ba611f099a838822ab550";
+      sha256 = "sha256-5hUBJhc2PWzMv5gXc6SayDTZJVAFrXAYAqNaWETRfoc=";
+    };
+  });
+
   linuxPackagesOverride = linuxPackages:
     linuxPackages.extend (lfinal: lprev: {
       corefreq =
       let kernel = lprev.kernel;
       in final.stdenv.mkDerivation rec {
         pname = "corefreq";
-        version = "1.84";
+        version = "develop";
 
         passthru.moduleName = "corefreqk";
 
@@ -340,13 +360,14 @@ substituteInPlace meson.build --replace "join_paths(get_option('prefix'),get_opt
           "KERNELDIR=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
           "INSTALL_MOD_PATH=$(out)"
           "PREFIX=$(out)"
+          "UI_TRANSPARENCY=1"
         ];
 
         src = final.fetchFromGitHub {
           owner = "cyring";
           repo = pname;
-          rev = version;
-          hash = "sha256-8dROUO3umAuORmotmQVLPnz2wPTNf9/2gkJapytamP4=";
+          rev = "8d81912c5bc63112dc321157f9d23301731086b7";
+          hash = "sha256-HSFGBEmMhP5vUv8dnI14WXRjcfb8KhMcKp2sQXJNcp8=";
         };
       };
     });
