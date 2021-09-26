@@ -1,4 +1,41 @@
 (final: prev: rec {
+  libtpms = prev.libtpms.overrideAttrs(o: rec {
+    version = "0.8.6";
+    src = prev.fetchFromGitHub {
+      owner = "stefanberger";
+      repo = "libtpms";
+      rev = "v${version}";
+      hash = "sha256-XvugcpoFQhdCBBg7hOgsUzSn4ad7RUuAEkvyiPLg4Lw=";
+    };
+  });
+  OVMF = (prev.OVMF.override({ secureBoot = true; })).overrideAttrs (o: {
+    buildFlags = o.buildFlags ++ [
+      "-DTPM_ENABLE=TRUE"
+      "-DTPM_CONFIG_ENABLE=TRUE"
+    ];
+  });
+
+  swtpm = prev.swtpm.overrideAttrs(o: rec {
+    version = "1860183c42a0d43b444cb8cf3aae71de4ed0b601";
+    nativeBuildInputs = o.nativeBuildInputs ++ [ prev.python3 prev.makeWrapper ];
+    patches = [ ./localstatedir.patch ];
+    prePatch = "";
+    configureFlags = o.configureFlags ++ [
+      "--localstatedir=/var"
+    ];
+
+    buildInputs = o.buildInputs ++ [ prev.json-glib ];
+    src = prev.fetchFromGitHub {
+      owner = "stefanberger";
+      repo = "swtpm";
+      rev = version;
+      hash = "sha256-lAXxuE7GSJdfznlU0lXQpvu/0cPMqwDG7c2ibgktMSE=";
+    };
+
+    postInstall = ''
+      wrapProgram $out/share/swtpm/swtpm-localca --prefix PATH : ${prev.lib.makeBinPath [ prev.gnutls ]}
+    '';
+  });
   factorio = prev.factorio.overrideAttrs(o: rec {
     version = "1.1.36";
     name = "factorio-${version}";

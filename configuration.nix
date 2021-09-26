@@ -2,26 +2,48 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ lib, pkgs, config, ... }:
-let
-  unstable = pkgs.unstable;
-in {
+{ config, lib, pkgs, ... }:
+{
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.consoleMode = "max";
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.kernelModules = [ "it87" "coretemp" "nct6683" "i2c-dev" ];
+  boot.kernelModules = [
+    "it87" "coretemp" "nct6683" "i2c-dev"
+
+    # vfio: load kmods
+    "vfio_pci" "vfio" "vfio_iommu_type1"
+    "vfio_virqfd"
+  ];
   boot.extraModprobeConfig = ''
   options nct6683 force=1
 '';
-  boot.kernelParams = [ "amdgpu.ppfeaturemask=0xffffffff" ];
+  boot.kernelParams = [
+    "amd_iommu=on" # vfio: should be enabled by default, paranoia
+    "iommu=pt"     # vfio: passthru
+  ];
+  hardware.cpu.amd.updateMicrocode = true;
+
   boot.initrd.kernelModules = [ "amdgpu" ];
   boot.cleanTmpDir = true;
   boot.initrd.verbose = false;
 
   powerManagement.cpuFreqGovernor = "schedutil";
   boot.supportedFilesystems = [ "ntfs" ];
-  boot.kernelPackages = pkgs.linuxPackagesOverride unstable.linuxPackages_5_12;
+
+  boot.kernelPackages = pkgs.linuxPackagesOverride pkgs.linuxPackages_5_14;
+  /*
+  boot.kernelPackages = pkgs.linuxPackagesOverride (pkgs.linuxPackagesFor (pkgs.linux_testing.override {
+    argsOverride = rec {
+      src = pkgs.fetchurl {
+        url = "https://git.kernel.org/torvalds/t/linux-5.14-rc7.tar.gz";
+        sha256 = "sha256-zeHvEipSGZ3Db9oLoRJ9u7k2wWhwJO9iCdHwaN4mdOA=";
+      };
+      ignoreConfigErrors = true;
+      version = "5.14-rc7";
+      modDirVersion = "5.14.0-rc7";
+    };
+  }));*/
 
   networking.hostName = "navi";
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -33,10 +55,16 @@ in {
   # Per-interface useDHCP will be mandatory in the future, so this generated config
   # replicates the default behaviour.
   networking.useDHCP = false;
-  networking.interfaces.enp38s0.useDHCP = true;
+  # networking.interfaces.enp38s0.useDHCP = true;
   #networking.interfaces.wlp37s0.useDHCP = true;
-  #networking.wireless.iwd.enable = true;
+  networking.wireless.iwd = {
+    enable = true;
+    settings = {
+      General.EnableNetworkConfiguration = true;
+    };
+  };
   networking.useNetworkd = true;
+  services.resolved.dnssec = "false";
 
   services.emacs.package = pkgs.emacsPgtkGcc;
   services.emacs.enable = true;
@@ -111,9 +139,9 @@ logger_stdout_level=0
     keyMap = "us";
   };
 
-  systemd.packages = [ pkgs.hawck ];
-  services.udev.packages = [ pkgs.hawck ];
-  systemd.services."hawck-inputd" = {
+  # systemd.packages = [ pkgs.hawck ];
+  # services.udev.packages = [ pkgs.hawck ];
+  /*systemd.services."hawck-inputd" = {
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       Type = "simple";
@@ -128,17 +156,36 @@ logger_stdout_level=0
   systemd.user.services."hawck-macrod" = {
     wantedBy = [ "graphical-session.target" ];
     path = with pkgs; [ bash sway libnotify jq ];
-  };
+  };*/
+
   users.groups = {
     hawck-input-share = {};
     hawck-input = {};
     uinput = {};
   };
+
   users.users.hawck-input = {
+    group = "hawck-input";
     home = "/var/lib/hawck-input";
-    extraGroups = [ "uinput" "input" "hawck-input" "hawck-input-share" ];
+    extraGroups = [ "uinput" "input" "hawck-input-share" ];
     isSystemUser = true;
   };
+  virtualisation.libvirtd.enable = true;
+  /*virtualisation.libvirtd.package =
+    let
+      libvirtd = pkgs.writeScriptBin "libvirtd" ''
+  export PATH=$PATH:${pkgs.swtpm}/bin/swtpm
+  exec ${pkgs.libvirt}/bin/libvirtd $@
+  '';
+    in pkgs.symlinkJoin {
+      name = "libvirt";
+      paths = [
+        libvirtd
+        pkgs.libvirt
+      ];
+    };*/
+
+  systemd.services.libvirtd.path = [ pkgs.swtpm-tpm2 ];
 
   systemd.tmpfiles.rules = [
     "d /var/lib/hawck-input/ 770 hawck-input hawck-input-share"
@@ -151,6 +198,7 @@ logger_stdout_level=0
 
   hardware.opengl = {
     enable = true;
+    setLdLibraryPath = true;
     driSupport32Bit = true;
     extraPackages = with pkgs; [
       rocm-opencl-icd
@@ -159,18 +207,17 @@ logger_stdout_level=0
   };
 
   # hardware.enableRedistributableFirmware = true;
-  hardware.firmware = [ pkgs.unstable.firmwareLinuxNonfree ];
+  hardware.firmware = [ pkgs.firmwareLinuxNonfree ];
   hardware.bluetooth.enable = true;
   hardware.steam-hardware.enable = true;
   # hardware.pulseaudio.support32Bit = true;
 
   users.users.tny = {
      isNormalUser = true;
-     extraGroups = [ "wheel" "hawck-input-share" ];
+     extraGroups = [ "dialout" "wheel" "hawck-input-share" "libvirtd" "hledger" "audio" ];
   };
   
   nixpkgs.config.allowUnfree = true;
-  nixpkgs.config.contentAddressedByDefault = true;
 
   services.corefreq.enable = true;
   environment.systemPackages = with pkgs; [
@@ -184,30 +231,43 @@ logger_stdout_level=0
     openssl
     adoptopenjdk-bin git
     mullvad-vpn
+
+    qemu OVMF-secureBoot
+    swtpm-tpm2 tpm2-tools
+    virt-manager
   ];
 
-
   programs.adb.enable = true;
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
   programs.mtr.enable = true;
   networking.wireguard.enable = true;
   services.mullvad-vpn.enable = true;
+  services.tailscale.enable = true;
   networking.iproute2.enable = lib.mkForce false;
   networking.firewall.checkReversePath = "loose";
 
-  # Enable the OpenSSH daemon.
-  services.openssh.enable = true;
-  services.openssh.passwordAuthentication = false;
+  programs.wireshark = {
+    enable = true;
+    package = pkgs.wireshark-qt;
+  };
+
+  # Enable
+  services.hledger-web = {
+    enable = true;
+    capabilities = {
+      view = true;
+      manage = true;
+      add = true;
+    };
+  };
 
   services.earlyoom.enable = true;
-
-  networking.firewall.enable = true;
-  networking.firewall.allowedTCPPorts = [ 54875 54941 8080 27036 27037 ];
-  networking.firewall.allowedUDPPorts = [ 54875 54941 27031 27036 ];
-
+  # networking.
   documentation.man.enable = true;
   documentation.dev.enable = true;
+
+  services.openssh.enable = true;
+  services.openssh.passwordAuthentication = false;
+  services.openssh.openFirewall = true;
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
