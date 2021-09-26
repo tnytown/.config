@@ -1,7 +1,8 @@
 { stdenv, fetchurl, adoptopenjdk-hotspot-bin-16,
   minecraft-server, unzip, zip }:
 let meta = (import ./libs.nix);
-    mojang-server = minecraft-server.override { jre_headless = adoptopenjdk-hotspot-bin-16; };
+    jdk = adoptopenjdk-hotspot-bin-16;
+    mojang-server = minecraft-server.override { jre_headless = jdk; };
     mojang-jar = "${mojang-server}/lib/minecraft/server.jar";
 in
 stdenv.mkDerivation rec {
@@ -42,7 +43,7 @@ cat > $out/bin/minecraft-server << 'EOF'
 # hack: "make sure" we're running as the minecraft user (in home, which is /var/lib/minecraft), then drop the path to the Mojang jar in the chat.
 [[ "$PWD" = "$HOME" ]] && (echo "serverJar=${mojang-jar}" >fabric-server-launcher.properties)
 
-exec ${adoptopenjdk-hotspot-bin-16}/bin/java $@ -jar ${placeholder "out"}/lib/minecraft/fabric-server-launch.jar
+exec ${jdk}/bin/java $@ -jar ${placeholder "out"}/lib/minecraft/fabric-server-launch.jar
 EOF
 chmod +x $out/bin/minecraft-server
 '';
