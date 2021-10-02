@@ -15,7 +15,7 @@
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
     rocm.url = "github:nixos-rocm/nixos-rocm";
-    rocm.flake = false;
+    rocm.inputs.nixpkgs.follows = "nixpkgs";
 
     home-manager.url = "github:nix-community/home-manager/master";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
@@ -34,12 +34,19 @@
 
     mhctf.url = "/home/tny/dev/logo";
     mhctf.inputs.nixpkgs.follows = "nixpkgs";
+
+    nixpkgs-format.url = "github:nix-community/nixpkgs-fmt";
+    nixpkgs-format.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   # Cargo culted.
   # https://github.com/nix-community/home-manager/issues/1538#issuecomment-706627100
-  outputs = inputs@{ self, flake-utils, nixpkgs, unstable, darwin, sops-nix
-    , rocm, home-manager, deploy-rs, cachix, speedy, ... }:
+  outputs = inputs@{ self, flake-utils, nixpkgs, unstable, darwin, sops-nix,
+                     rocm, home-manager, deploy-rs,
+      nixpkgs-format,
+      cachix,
+      speedy,
+      ... }:
     let
       lib = nixpkgs.lib;
       system = "x86_64-linux";
@@ -56,25 +63,17 @@
             deploy-rs.defaultPackage.${system}
             (pkgs.writeShellScriptBin "nrb"
               "sudo nixos-rebuild $@ -L switch --flake .")
+
             (pkgs.writeShellScriptBin "hrb"
               "nix build $@ -L .#homeConfigurations.navi.activationPackage && result/activate")
-            nixfmt
+
+            pre-commit
+            nixpkgs-format.defaultPackage.${system}
 
             (pkgs.callPackage sops-nix { }).sops-age-hook
           ];
         };
         overlays = {
-          /* TODO(tny): unstable = stable in the interim. This overlay is causing
-              * problems, so I'm disabling it.
-             unstable = (final: prev: rec {
-               # overlay unstable into our stable nixpkgs set.
-               unstable = import inputs.unstable {
-                 system = final.system;
-
-                 config.allowUnfree = true;
-               };
-             });
-          */
           personal = (import ./overlays/overlays.nix);
         };
 
@@ -147,10 +146,7 @@
                 ./modules/jenkins-agent.nix
                 ./modules/minecraft-server.nix
                 sops-nix.nixosModules.sops
-                {
-                  systemd.services.hawck-inputd.enable = false;
-                  # environment.systemPackages = [ inputs.binja.defaultPackage.${system} ];
-                }
+
                 inputs.fishcgi.nixosModule
                 ({ config, ... }: {
                   services.nginx.enable = true;
