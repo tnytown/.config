@@ -36,6 +36,9 @@ echo $gpudevs
 echo "[-] graphical linux shutdown"
 systemctl isolate multi-user.target
 
+# WTF?
+systemctl start iwd.service
+
 # TODO(tny): may be necessary on other machines? uncomment if needed
 #echo 0 > /sys/class/vtconsole/vtcon0/bind
 #echo 0 > /sys/class/vtconsole/vtcon1/bind

@@ -11,8 +11,9 @@ dmname='trampoline'
 [[ -e "/dev/mapper/$dmname" ]] && dmsetup remove $dmname
 
 # YOLO
-[[ -e /dev/loop0p1 ]] && losetup -d /dev/loop0
-losetup /dev/loop1 && losetup -d /dev/loop1
+for dev in `losetup --noheadings --output BACK-FILE,NAME | awk '$1 ~ /\/(winpart|winboot)\.img$/ { print $2 }'`; do
+    losetup -d $dev
+done
 
 # getting block devices in order
 boot=$(losetup -P -f --show winboot.img)
