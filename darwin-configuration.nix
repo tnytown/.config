@@ -3,27 +3,28 @@
 let
   inherit (pkgs) lorri;
   #appenv = import "/Users/apan/dev/appenv/" { };
-in {
-  
+in
+{
+
   nixpkgs.config.packageOverrides = pkgs: {
     nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
       inherit pkgs;
     };
   };
-  
+
   # List packages installed in system profile. To search by name, run:
   # $ nix-env -qaP | grep wget
   environment.systemPackages =
     [
       pkgs.fish
-#      appenv
+      #      appenv
       lorri
       pkgs.curl
-#    pkgs.nur.repos.mic92.frida-tools
+      #    pkgs.nur.repos.mic92.frida-tools
     ];
-#  system.activationScripts.postUserActivation.text = ''
-#  launchctl setenv DYLD_INSERT_LIBRARIES ${appenv}/lib/libappenv.dylib
-#  '';
+  #  system.activationScripts.postUserActivation.text = ''
+  #  launchctl setenv DYLD_INSERT_LIBRARIES ${appenv}/lib/libappenv.dylib
+  #  '';
 
   launchd.user.agents = {
     "lorri" = {
@@ -41,7 +42,7 @@ in {
       '';
     };
   };
-  
+
   # Use a custom configuration.nix location.
   # $ darwin-rebuild switch -I darwin-config=$HOME/.config/nixpkgs/darwin/configuration.nix
   # environment.darwinConfig = "$HOME/.config/nixpkgs/darwin/configuration.nix";

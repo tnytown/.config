@@ -9,18 +9,23 @@
   boot.loader.systemd-boot.consoleMode = "max";
   boot.loader.efi.canTouchEfiVariables = true;
   boot.kernelModules = [
-    "it87" "coretemp" "nct6683" "i2c-dev"
+    "it87"
+    "coretemp"
+    "nct6683"
+    "i2c-dev"
 
     # vfio: load kmods
-    "vfio_pci" "vfio" "vfio_iommu_type1"
+    "vfio_pci"
+    "vfio"
+    "vfio_iommu_type1"
     "vfio_virqfd"
   ];
   boot.extraModprobeConfig = ''
-  options nct6683 force=1
-'';
+    options nct6683 force=1
+  '';
   boot.kernelParams = [
     "amd_iommu=on" # vfio: should be enabled by default, paranoia
-    "iommu=pt"     # vfio: passthru
+    "iommu=pt" # vfio: passthru
   ];
   hardware.cpu.amd.updateMicrocode = true;
 
@@ -33,7 +38,7 @@
 
   boot.kernelPackages = pkgs.linuxPackagesOverride pkgs.linuxPackages_5_14;
   /*
-  boot.kernelPackages = pkgs.linuxPackagesOverride (pkgs.linuxPackagesFor (pkgs.linux_testing.override {
+    boot.kernelPackages = pkgs.linuxPackagesOverride (pkgs.linuxPackagesFor (pkgs.linux_testing.override {
     argsOverride = rec {
       src = pkgs.fetchurl {
         url = "https://git.kernel.org/torvalds/t/linux-5.14-rc7.tar.gz";
@@ -76,15 +81,15 @@
     hwMode = "a";
     channel = 36;
     extraConfig = ''
-wpa_pairwise=CCMP
-ieee80211n=1
-ieee80211ac=1
-require_ht=1
-require_vht=1
-#vht_oper_chwidth=1
-#vht_oper_centr_freq_seg0_idx=42
-logger_stdout=-1
-logger_stdout_level=0
+      wpa_pairwise=CCMP
+      ieee80211n=1
+      ieee80211ac=1
+      require_ht=1
+      require_vht=1
+      #vht_oper_chwidth=1
+      #vht_oper_centr_freq_seg0_idx=42
+      logger_stdout=-1
+      logger_stdout_level=0
     '';
     wpaPassphrase = "EEEEEEEEEE";
   };
@@ -115,12 +120,12 @@ logger_stdout_level=0
   security.rtkit.enable = true;
   hardware.pulseaudio.enable = false;
   services.pipewire = {
-     enable = true;
-     alsa.enable = true;
-     alsa.support32Bit = true;
-     pulse.enable = true;
-     jack.enable = true;
-   };
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+    jack.enable = true;
+  };
 
   # services.foldingathome.enable = true;
   services.foldingathome.enable = false;
@@ -129,7 +134,7 @@ logger_stdout_level=0
     # https://discourse.nixos.org/t/avahi-for-printer-discovery-editing-nsswitch-conf/3254/4
     publish.enable = true;
     publish.workstation = true;
-    
+
     enable = true;
     nssmdns = true;
   };
@@ -152,16 +157,16 @@ logger_stdout_level=0
     };
 
     path = with pkgs; [ bash sway libnotify jq ];
-  };
-  systemd.user.services."hawck-macrod" = {
+    };
+    systemd.user.services."hawck-macrod" = {
     wantedBy = [ "graphical-session.target" ];
     path = with pkgs; [ bash sway libnotify jq ];
   };*/
 
   users.groups = {
-    hawck-input-share = {};
-    hawck-input = {};
-    uinput = {};
+    hawck-input-share = { };
+    hawck-input = { };
+    uinput = { };
   };
 
   users.users.hawck-input = {
@@ -174,9 +179,9 @@ logger_stdout_level=0
   /*virtualisation.libvirtd.package =
     let
       libvirtd = pkgs.writeScriptBin "libvirtd" ''
-  export PATH=$PATH:${pkgs.swtpm}/bin/swtpm
-  exec ${pkgs.libvirt}/bin/libvirtd $@
-  '';
+    export PATH=$PATH:${pkgs.swtpm}/bin/swtpm
+    exec ${pkgs.libvirt}/bin/libvirtd $@
+    '';
     in pkgs.symlinkJoin {
       name = "libvirt";
       paths = [
@@ -213,27 +218,35 @@ logger_stdout_level=0
   # hardware.pulseaudio.support32Bit = true;
 
   users.users.tny = {
-     isNormalUser = true;
-     extraGroups = [ "dialout" "wheel" "hawck-input-share" "libvirtd" "hledger" "audio" ];
+    isNormalUser = true;
+    extraGroups = [ "dialout" "wheel" "hawck-input-share" "libvirtd" "hledger" "audio" ];
   };
-  
+
   nixpkgs.config.allowUnfree = true;
 
   services.corefreq.enable = true;
   environment.systemPackages = with pkgs; [
     hawck
     rocminfo
-    fahcontrol fahviewer
+    fahcontrol
+    fahviewer
     manpages
-    dmidecode efibootmgr
-    firefox-wayland vim alacritty lm_sensors
+    dmidecode
+    efibootmgr
+    firefox-wayland
+    vim
+    alacritty
+    lm_sensors
     vulkan-tools
     openssl
-    adoptopenjdk-bin git
+    adoptopenjdk-bin
+    git
     mullvad-vpn
 
-    qemu OVMF-secureBoot
-    swtpm-tpm2 tpm2-tools
+    qemu
+    OVMF-secureBoot
+    swtpm-tpm2
+    tpm2-tools
     virt-manager
   ];
 
@@ -277,4 +290,3 @@ logger_stdout_level=0
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "20.09"; # Did you read the comment?
 }
-

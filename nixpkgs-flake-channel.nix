@@ -5,11 +5,15 @@ let
     inherit system;
     name = "nixpkgs-flake-channel";
     builder = "${bash}/bin/bash";
-    args = [ "-c" ''
-mkdir -p $out
-ln -s ${nixpkgs} $out/nixpkgs
-'' ];
+    args = [
+      "-c"
+      ''
+        mkdir -p $out
+        ln -s ${nixpkgs} $out/nixpkgs
+      ''
+    ];
     preferLocalBuild = true;
     PATH = "${lib.makeBinPath [ coreutils ]}";
   };
-in (pkgs.callPackage) drv {}
+in
+(pkgs.callPackage) drv { }

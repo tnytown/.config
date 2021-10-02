@@ -1,5 +1,5 @@
 (final: prev: rec {
-  a52dec = prev.a52dec.overrideAttrs(o: rec {
+  a52dec = prev.a52dec.overrideAttrs (o: rec {
     src = prev.fetchurl {
       url = "${meta.homepage}/files/${o.pname}-${o.version}.tar.gz";
       sha256 = "oh1ySrOzkzMwGUNTaH34LEdbXfuZdRPu9MJd5shl7DM=";
@@ -9,7 +9,7 @@
     };
   });
 
-  SDL_image = prev.SDL_image.overrideAttrs(_: {
+  SDL_image = prev.SDL_image.overrideAttrs (_: {
     patches = [
       (prev.fetchpatch {
         name = "CVE-2017-2887";
@@ -20,25 +20,27 @@
     ];
   });
 
-  openjdk8 = with prev; prev.openjdk8.overrideAttrs(o: {
-    srcs = let
-      sr = d: h: d.overrideAttrs(o_: { outputHash = h; });
-      sro =  n: h: sr (builtins.elemAt o.srcs n) h;
-      jdk = builtins.elemAt o.srcs 0;
-      corba = builtins.elemAt o.srcs 3;
-    in [
-      (sro 0 "sha256-ld5AdD4sd2IzfJPU647Hj724MEy9z2W1F50Uz60VC9s=")
-      (sro 1 "sha256-A6uV2khiC4cDvFnFEOTCEcHiIb4Akzc3pOuEtcJnqIg=")
-      (sro 2 "sha256-MluJ68kmoRxDEslkVACtoe//q1m8X6WyJoIFtL7Gwe8=")
-      (sro 3 "sha256-z2AgHR7lOo33UBs2ghI3g3oAguSl2714E3I6L9xD0sk=")
-      (sro 4 "sha256-5bOTdz6H3/9cJvkGk4vHD7iv0DVl+ibPVDzW9JHmeV4=")
-      (sro 5 "sha256-9tWzJLoUiPxF3wswkHE+IDMX8f866YkpkvO9DXuPSV0=")
-      (sro 6 "sha256-nFcgWJhdp2ZElM5XEREvMvy42dT+UsPnLM15Jf6u5mU=")
-      (sro 7 "sha256-fQE0eg6J5qzUw5+zGCaetEfmTXJRkhnD7KLhi10t8Gg=")
-    ];
+  openjdk8 = with prev; prev.openjdk8.overrideAttrs (o: {
+    srcs =
+      let
+        sr = d: h: d.overrideAttrs (o_: { outputHash = h; });
+        sro = n: h: sr (builtins.elemAt o.srcs n) h;
+        jdk = builtins.elemAt o.srcs 0;
+        corba = builtins.elemAt o.srcs 3;
+      in
+      [
+        (sro 0 "sha256-ld5AdD4sd2IzfJPU647Hj724MEy9z2W1F50Uz60VC9s=")
+        (sro 1 "sha256-A6uV2khiC4cDvFnFEOTCEcHiIb4Akzc3pOuEtcJnqIg=")
+        (sro 2 "sha256-MluJ68kmoRxDEslkVACtoe//q1m8X6WyJoIFtL7Gwe8=")
+        (sro 3 "sha256-z2AgHR7lOo33UBs2ghI3g3oAguSl2714E3I6L9xD0sk=")
+        (sro 4 "sha256-5bOTdz6H3/9cJvkGk4vHD7iv0DVl+ibPVDzW9JHmeV4=")
+        (sro 5 "sha256-9tWzJLoUiPxF3wswkHE+IDMX8f866YkpkvO9DXuPSV0=")
+        (sro 6 "sha256-nFcgWJhdp2ZElM5XEREvMvy42dT+UsPnLM15Jf6u5mU=")
+        (sro 7 "sha256-fQE0eg6J5qzUw5+zGCaetEfmTXJRkhnD7KLhi10t8Gg=")
+      ];
   });
 
-  SDL = with prev; prev.SDL.overrideAttrs(o: {
+  SDL = with prev; prev.SDL.overrideAttrs (o: {
     patches = [
       # "${prev.pkgs}/pkgs/development/libraries/SDL/find-headers.patch"
       "${builtins.head o.patches}"
@@ -85,7 +87,7 @@
     ];
   });
 
-  mercurial = prev.mercurial.overrideAttrs(o: {
+  mercurial = prev.mercurial.overrideAttrs (o: {
     patches = [
       (prev.fetchpatch {
         name = "D10638.diff";

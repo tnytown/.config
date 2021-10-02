@@ -41,12 +41,21 @@
 
   # Cargo culted.
   # https://github.com/nix-community/home-manager/issues/1538#issuecomment-706627100
-  outputs = inputs@{ self, flake-utils, nixpkgs, unstable, darwin, sops-nix,
-                     rocm, home-manager, deploy-rs,
-      nixpkgs-format,
-      cachix,
-      speedy,
-      ... }:
+  outputs =
+    inputs@{ self
+    , flake-utils
+    , nixpkgs
+    , unstable
+    , darwin
+    , sops-nix
+    , rocm
+    , home-manager
+    , deploy-rs
+    , nixpkgs-format
+    , cachix
+    , speedy
+    , ...
+    }:
     let
       lib = nixpkgs.lib;
       system = "x86_64-linux";
@@ -54,7 +63,9 @@
         system.nix-flake-config.systemFlake = self;
         system.nix-flake-config.nixpkgsFlake = nixpkgs;
       };
-    in flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ] (system:
+    in
+    flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ]
+      (system:
       let pkgs = nixpkgs.legacyPackages.${system};
       in rec {
         devShell = pkgs.mkShell {
@@ -77,39 +88,43 @@
           personal = (import ./overlays/overlays.nix);
         };
 
-        legacyPackages = let
-          lpkgs = (import nixpkgs {
-            inherit system;
-            config.allowUnfree = true;
-          });
-        in (lpkgs // overlays.personal lpkgs lpkgs);
+        legacyPackages =
+          let
+            lpkgs = (import nixpkgs {
+              inherit system;
+              config.allowUnfree = true;
+            });
+          in
+          (lpkgs // overlays.personal lpkgs lpkgs);
       }) // rec {
-        overlaysList = system:
-          lib.mapAttrsToList (s: t: t) self.overlays.${system};
+      overlaysList = system:
+        lib.mapAttrsToList (s: t: t) self.overlays.${system};
 
-        # this is factored out to account for the disparate home directory locations that I deal with,
-        # namely macOS's /Users vs traditionally Linux's /home.
-        homeConfiguration = { system, config, homeDirectory, username ? "tny" , extraImports ? [] }:
-          home-manager.lib.homeManagerConfiguration {
-            inherit system homeDirectory username;
-            configuration = {
-              nixpkgs.overlays = overlaysList system;
-              imports = [ ./home.nix ] ++ extraImports;
-            };
+      # this is factored out to account for the disparate home directory locations that I deal with,
+      # namely macOS's /Users vs traditionally Linux's /home.
+      homeConfiguration = { system, config, homeDirectory, username ? "tny", extraImports ? [ ] }:
+        home-manager.lib.homeManagerConfiguration {
+          inherit system homeDirectory username;
+          configuration = {
+            nixpkgs.overlays = overlaysList system;
+            imports = [ ./home.nix ] ++ extraImports;
           };
+        };
 
-        machines = {
-          navi = rec {
-            system = "x86_64-linux";
+      machines = {
+        navi = rec {
+          system = "x86_64-linux";
 
-            config = let
+          config =
+            let
               mkModule = path:
                 (args@{ config, lib, pkgs, ... }:
                   import path ({
                     # is there a better way to do this?
                     pkgs = import inputs.unstable { inherit system; };
                   } // removeAttrs args [ "pkgs" ]));
-            in nixpkgs.lib.nixosSystem {
+            in
+            nixpkgs.lib.nixosSystem {
               inherit system;
 
               modules = [
@@ -134,7 +149,7 @@
                 # cachix
                 {
                   nixpkgs.overlays = self.overlaysList system
-                    ++ [ (import rocm) inputs.emacs.overlay ];
+                  ++ [ (import rocm) inputs.emacs.overlay ];
                 }
 
                 ./configuration.nix
@@ -170,26 +185,28 @@
               ];
             };
 
-            home = homeConfiguration {
-              inherit system config;
+          home = homeConfiguration {
+            inherit system config;
 
-              homeDirectory = "/home/tny/";
-              extraImports = [ ./modules/hm/desktop.nix ];
-            };
+            homeDirectory = "/home/tny/";
+            extraImports = [ ./modules/hm/desktop.nix ];
           };
+        };
 
-          psyche = rec {
-            #ignore = true;
-            system = "x86_64-linux";
+        psyche = rec {
+          #ignore = true;
+          system = "x86_64-linux";
 
-            config = let
+          config =
+            let
               mkModule = path:
                 (args@{ config, lib, pkgs, ... }:
                   import path ({
                     # is there a better way to do this?
                     pkgs = import inputs.unstable { inherit system; };
                   } // removeAttrs args [ "pkgs" ]));
-            in nixpkgs.lib.nixosSystem {
+            in
+            nixpkgs.lib.nixosSystem {
               inherit system;
 
               modules = [
@@ -210,48 +227,49 @@
                 ./psyche-configuration.nix
               ];
             };
-          };
-
-          venus = rec {
-            system = "x86_64-darwin";
-
-            config = darwin.lib.darwinSystem {
-              modules = [
-                ./modules/nix-flake-config.nix
-                flakePins
-                ./darwin-configuration.nix
-              ];
-            };
-
-            home = homeConfiguration {
-              inherit system config;
-
-              homeDirectory = "/Users/apan/";
-              extraImports = [ ./modules/hm/ext-ssh.nix ];
-            };
-          };
         };
 
-        # cachix = (import inputs.cachix);
-        darwinConfigurations = (builtins.mapAttrs (k: v: v.config)
-          (lib.filterAttrs (k: v: lib.hasSuffix "darwin" v.system) machines));
-        nixosConfigurations = (builtins.mapAttrs (k: v: v.config)
-          (lib.filterAttrs
-            (k: v: lib.hasSuffix "linux" v.system && !(v ? ignore)) machines));
-        homeConfigurations = builtins.mapAttrs (k: v: v.home) machines;
+        venus = rec {
+          system = "x86_64-darwin";
 
-        deploy.nodes.psyche = {
-          sshUser = "root";
-          hostname = "psyche.tny.town";
-          profiles.system = {
-            user = "root";
-            path = builtins.trace (deploy-rs.lib.x86_64-linux.activate.nixos
-              self.machines.psyche.config).outPath
-              (deploy-rs.lib.x86_64-linux.activate.nixos
-                self.machines.psyche.config);
+          config = darwin.lib.darwinSystem {
+            modules = [
+              ./modules/nix-flake-config.nix
+              flakePins
+              ./darwin-configuration.nix
+            ];
+          };
+
+          home = homeConfiguration {
+            inherit system config;
+
+            homeDirectory = "/Users/apan/";
+            extraImports = [ ./modules/hm/ext-ssh.nix ];
           };
         };
-
-        # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
       };
+
+      # cachix = (import inputs.cachix);
+      darwinConfigurations = (builtins.mapAttrs (k: v: v.config)
+        (lib.filterAttrs (k: v: lib.hasSuffix "darwin" v.system) machines));
+      nixosConfigurations = (builtins.mapAttrs (k: v: v.config)
+        (lib.filterAttrs
+          (k: v: lib.hasSuffix "linux" v.system && !(v ? ignore))
+          machines));
+      homeConfigurations = builtins.mapAttrs (k: v: v.home) machines;
+
+      deploy.nodes.psyche = {
+        sshUser = "root";
+        hostname = "psyche.tny.town";
+        profiles.system = {
+          user = "root";
+          path = builtins.trace (deploy-rs.lib.x86_64-linux.activate.nixos
+            self.machines.psyche.config).outPath
+            (deploy-rs.lib.x86_64-linux.activate.nixos
+              self.machines.psyche.config);
+        };
+      };
+
+      # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
+    };
 }
