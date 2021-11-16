@@ -34,7 +34,16 @@ echo $gpudevs
 
 # point of no return
 echo "[-] graphical linux shutdown"
-systemctl isolate multi-user.target
+# systemctl isolate multi-user.target
+# TODO(tny): properly stop graphical target. if we isolate multi-user, we end up
+# inadvertently restarting dbus, which causes issues.
+
+for id in $(loginctl list-sessions --no-legend | awk '{print $1}'); do
+	[[ $(loginctl show-session -p Type $id) =~ "wayland" ]] &&
+		loginctl kill-session $id
+done
+
+systemctl stop greetd.service
 
 # WTF?
 systemctl start iwd.service
@@ -72,7 +81,8 @@ for x in $gpudevs; do virsh nodedev-reattach $x; done
 
 # TODO(tny): amdgpu should already be up, otherwise modprobe amdgpu
 
-systemctl isolate graphical.target
+# systemctl isolate graphical.target
+systemctl start greetd.service
 
 echo "[-] hello world!"
 # and we're back up
