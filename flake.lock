@@ -379,11 +379,11 @@
         "nixpkgs-fmt": "nixpkgs-fmt"
       },
       "locked": {
-        "lastModified": 1635946335,
-        "narHash": "sha256-cLg0qy+H3qJtZT1imJGVcMzZJ38vO+X+fsPs2Dduz7U=",
+        "lastModified": 1637047249,
+        "narHash": "sha256-O//28pSJCuOJ3vVhABjFvxyE22XzDIM56xya8nf5fo4=",
         "owner": "knownunown",
         "repo": "nixpkgs-overlay-tny",
-        "rev": "aff62e5d951a5feb80b2e10d6ae93f4c71a45bab",
+        "rev": "c181beb7e3135725c98caed472f76b5efcd34453",
         "type": "github"
       },
       "original": {
