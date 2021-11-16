@@ -30,7 +30,6 @@
     pkgs.binutils
     pkgs.jq
     pkgs.ripgrep
-    # pkgs.openrgb
     pkgs.zip
     pkgs.unzip
 
@@ -42,19 +41,29 @@
     pkgs.osu-lazer
     pkgs.rnnoise-plugin
     pkgs.obsidian
+    pkgs.reaper
+    (pkgs.cadence.override { libjack2 = pkgs.pipewire.jack; })
+    pkgs.guitarix
 
-    ((pkgs.multimc.overrideAttrs(o: { postInstall = o.postInstall + ''
-	wrapProgram $out/bin/multimc --prefix PATH : ${lib.makeBinPath [
-    (pkgs.runCommandNoCC "java16-link" {} ''
-mkdir -p $out/bin
-ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
-'')
-  ]}
-''; })).override { })
+    (
+      (pkgs.multimc.overrideAttrs (o: {
+        postInstall = o.postInstall + ''
+            wrapProgram $out/bin/multimc --prefix PATH : ${lib.makeBinPath [
+              (pkgs.runCommandNoCC "java16-link" {} ''
+          mkdir -p $out/bin
+          ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
+          '')
+            ]}
+        '';
+      }))
+    )
 
-    pkgs.gnome3.gnome-shell-extensions
-    pkgs.nordic
-    pkgs.gnome3.adwaita-icon-theme
+    pkgs.hledger
+    pkgs.ledger-autosync
+    pkgs.python3Packages.ofxclient
+    #pkgs.gnome3.gnome-shell-extensions
+    #pkgs.nordic
+    #pkgs.gnome3.adwaita-icon-theme
 
     pkgs.openrgb
     pkgs.pavucontrol
@@ -68,11 +77,11 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
     pkgs.chromium
     pkgs.mpv
     pkgs.lutris
+    #(pkgs.prusa-slicer.override { qt = pkgs.qt5; })
     pkgs.prusa-slicer
     pkgs.openscad
 
     pkgs.shotcut
-    pkgs.qjackctl
     pkgs.jalv
     pkgs.lilv
 
@@ -147,7 +156,10 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
 
   services.syncthing.enable = pkgs.hostPlatform.isLinux;
 
-  home.sessionVariables = { EDITOR = "emacsclient"; };
+  home.sessionVariables = {
+    EDITOR = "emacsclient";
+  };
+
   programs.bash.enable = true;
   programs.bash.initExtra = ''[[ ! "$0" = "bash" ]] && exec fish'';
   programs.fish.enable = true;
@@ -161,18 +173,22 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
   programs.direnv = {
     enable = true;
     nix-direnv.enable = true;
-    nix-direnv.enableFlakes = true;
+    # nix-direnv.enableFlakes = true;
   };
 
-  programs.htop.showCpuFrequency = true;
+  # programs.htop.showCpuFrequency = true;
 
   programs.git = {
     enable = true;
     userName = "Andrew Pan";
-    userEmail = "known@unown.me";
+    userEmail = "a@tny.town";
 
     extraConfig = {
       init.defaultBranch = "main";
+
+      user.signingKey = "6EB359BA";
+      commit.gpgsign = true;
+
       credential.helper =
         "${pkgs.git-credential-keepassxc}/bin/git-credential-keepassxc --unlock 0";
       core.excludesFile = (pkgs.writeText ".gitignore" ''
@@ -182,6 +198,7 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
 
         # Nix
         .direnv/
+        result
 
         # clangd
         .clangd/
@@ -194,21 +211,17 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
 
   programs.alacritty.enable = true;
   xdg.configFile."alacritty".source = ./alacritty;
-  # xdg.configFile."obs-studio/plugins/wlrobs".source = lib.mkIf pkgs.stdenv.isLinux "${pkgs.obs-wlrobs}/share/obs/obs-plugins/wlrobs";
 
+  programs.gpg.enable = true;
+  services.gpg-agent = {
+    enable = true;
+    enableSshSupport = true;
+    extraConfig = ''
+      allow-emacs-pinentry
+    '';
+  };
 
   xdg.configFile."libvirt/libvirt.conf".source = (pkgs.writeText) "libvirt.conf" ''
     uri_default = "qemu:///system"
   '';
-
-  #programs.alacritty.settings = ''
-  #
-  #'';
-
-  gtk.enable = pkgs.hostPlatform.isLinux;
-  gtk.theme.name = "Nordic";
-  dconf.settings = lib.mkIf pkgs.hostPlatform.isLinux {
-    "org/gnome/desktop/wm/preferences" = { theme = "Nordic"; };
-    "org/gnome/shell/extensions/user-theme" = { name = "Nordic"; };
-  };
 }

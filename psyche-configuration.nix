@@ -12,6 +12,7 @@ in rec {
     passwordAuthentication = false;
   };
 
+  users.mutableUsers = false;
   users.users.root.openssh.authorizedKeys.keys =
     let ssh-keys-for = (import ./keys/ssh-keys.nix { inherit lib; });
     in ssh-keys-for config.networking.hostName;
@@ -30,8 +31,8 @@ in rec {
       proxyPass = "http://127.0.0.1:8080";
       proxyWebsockets = true;
       extraConfig = ''
-      proxy_redirect http://localhost:8080 https://leroy.${networking.domain};
-'';
+        proxy_redirect http://localhost:8080 https://leroy.${networking.domain};
+      '';
     };
   };
 

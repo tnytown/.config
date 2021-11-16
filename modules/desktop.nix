@@ -19,6 +19,7 @@
     '';
     wrapperFeatures = {
       base = true;
+      gtk = true;
     };
   };
 
@@ -102,6 +103,7 @@
     enable = true;
     extraPortals = [
       pkgs.xdg-desktop-portal-wlr
+      pkgs.xdg-desktop-portal-kde
       pkgs.xdg-desktop-portal-gtk
     ];
     gtkUsePortal = true;
@@ -110,6 +112,9 @@
   environment.sessionVariables = {
     SDL_VIDEODRIVER = "wayland";
     XDG_CURRENT_DESKTOP = "sway";
+
+    # https://mastransky.wordpress.com/2020/03/16/wayland-x11-how-to-run-firefox-in-mixed-environment/
+    MOZ_DBUS_REMOTE = "1";
   };
 
 
@@ -160,6 +165,7 @@
       pkgs.meslo-lg
       pkgs.noto-fonts-cjk
       pkgs.noto-fonts-emoji
+      pkgs.font-awesome
     ];
 
     fontconfig = {

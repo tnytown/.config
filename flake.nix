@@ -10,6 +10,9 @@
     darwin.url = "github:lnl7/nix-darwin/master";
     darwin.inputs.nixpkgs.follows = "nixpkgs";
 
+    nixpkgs-overlay.url = "github:knownunown/nixpkgs-overlay-tny";
+    nixpkgs-overlay.inputs.nixpkgs.follows = "nixpkgs";
+
     emacs.url = "github:nix-community/emacs-overlay";
     sops-nix.url = "github:knownunown/sops-nix/age-support";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -47,6 +50,7 @@
     , nixpkgs
     , unstable
     , darwin
+    , nixpkgs-overlay
     , sops-nix
     , rocm
     , home-manager
@@ -62,6 +66,10 @@
       flakePins = {
         system.nix-flake-config.systemFlake = self;
         system.nix-flake-config.nixpkgsFlake = nixpkgs;
+      };
+      overlays = {
+        intree = (import ./overlays/overlays.nix);
+        tny = nixpkgs-overlay.overlay;
       };
     in
     flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ]
@@ -84,9 +92,6 @@
             (pkgs.callPackage sops-nix { }).sops-age-hook
           ];
         };
-        overlays = {
-          personal = (import ./overlays/overlays.nix);
-        };
 
         legacyPackages =
           let
@@ -95,10 +100,10 @@
               config.allowUnfree = true;
             });
           in
-          (lpkgs // overlays.personal lpkgs lpkgs);
+          (lpkgs // overlays.intree lpkgs lpkgs);
       }) // rec {
-      overlaysList = system:
-        lib.mapAttrsToList (s: t: t) self.overlays.${system};
+      inherit overlays;
+      overlaysList = lib.mapAttrsToList (s: t: t) overlays;
 
       # this is factored out to account for the disparate home directory locations that I deal with,
       # namely macOS's /Users vs traditionally Linux's /home.
@@ -106,7 +111,7 @@
         home-manager.lib.homeManagerConfiguration {
           inherit system homeDirectory username;
           configuration = {
-            nixpkgs.overlays = overlaysList system;
+            nixpkgs.overlays = overlaysList;
             imports = [ ./home.nix ] ++ extraImports;
           };
         };
@@ -115,75 +120,66 @@
         navi = rec {
           system = "x86_64-linux";
 
-          config =
-            let
-              mkModule = path:
-                (args@{ config, lib, pkgs, ... }:
-                  import path ({
-                    # is there a better way to do this?
-                    pkgs = import inputs.unstable { inherit system; };
-                  } // removeAttrs args [ "pkgs" ]));
-            in
-            nixpkgs.lib.nixosSystem {
-              inherit system;
+          config = nixpkgs.lib.nixosSystem {
+            inherit system;
 
-              modules = [
-                ./modules/nix-flake-config.nix
-                flakePins
+            modules = [
+              ./modules/nix-flake-config.nix
+              flakePins
 
-                (import cachix)
-                {
-                  cachix = [
-                    {
-                      name = "nixos-rocm";
-                      sha256 =
-                        "1l2g8l55b6jzb84m2dcpf532rm7p2g4dl56j3pbrfm03j54sg0v0";
-                    }
-                    {
-                      name = "nix-community";
-                      sha256 =
-                        "00lpx4znr4dd0cc4w4q8fl97bdp7q19z1d3p50hcfxy26jz5g21g";
-                    }
-                  ];
-                }
-                # cachix
-                {
-                  nixpkgs.overlays = self.overlaysList system
-                  ++ [ (import rocm) inputs.emacs.overlay ];
-                }
+              # cachix
+              (import cachix)
+              {
+                cachix = [
+                  {
+                    name = "nixos-rocm";
+                    sha256 =
+                      "1l2g8l55b6jzb84m2dcpf532rm7p2g4dl56j3pbrfm03j54sg0v0";
+                  }
+                  {
+                    name = "nix-community";
+                    sha256 =
+                      "00lpx4znr4dd0cc4w4q8fl97bdp7q19z1d3p50hcfxy26jz5g21g";
+                  }
+                ];
+              }
+              {
+                nixpkgs.overlays = self.overlaysList
+                ++ [ (import rocm) inputs.emacs.overlay ];
+              }
 
-                ./configuration.nix
-                ./machines/navi.nix
-                ./modules/security.nix
-                ./modules/initrd-ssh-luks.nix
-                ./modules/corefreq.nix
-                ./modules/desktop.nix
-                ./modules/jenkins-agent.nix
-                ./modules/minecraft-server.nix
-                sops-nix.nixosModules.sops
+              ./configuration.nix
+              ./machines/navi.nix
+              ./modules/security.nix
+              ./modules/initrd-ssh-luks.nix
+              ./modules/corefreq.nix
+              ./modules/desktop.nix
+              ./modules/jenkins-agent.nix
+              ./modules/minecraft-server.nix
+              sops-nix.nixosModules.sops
 
-                inputs.fishcgi.nixosModule
-                ({ config, ... }: {
-                  services.nginx.enable = true;
-                  services.fishcgi.enable = true;
-                  services.nginx.virtualHosts."localhost" = {
-                    default = true;
-                    root = "/var/lib/fishcgi/";
-                    locations."/".index = "index.fish";
-                    locations."~ .fish$" = {
-                      extraConfig = ''
-                        # try_files $uri =404;
-                        fastcgi_pass unix:${config.services.fishcgi.socket};
-                        fastcgi_index ${config.services.fishcgi.example};
-                        include ${config.services.nginx.package}/conf/fastcgi_params;
-                        include ${config.services.nginx.package}/conf/fastcgi.conf;
-                      '';
-                    };
+              inputs.fishcgi.nixosModule
+              ({ config, ... }: {
+                services.nginx.enable = true;
+                services.fishcgi.enable = true;
+                services.nginx.virtualHosts."localhost" = {
+                  default = true;
+                  root = "/var/lib/fishcgi/";
+                  locations."/".index = "index.fish";
+                  locations."~ .fish$" = {
+                    extraConfig = ''
+                      # try_files $uri =404;
+                      fastcgi_pass unix:${config.services.fishcgi.socket};
+                      fastcgi_index ${config.services.fishcgi.example};
+                      include ${config.services.nginx.package}/conf/fastcgi_params;
+                      include ${config.services.nginx.package}/conf/fastcgi.conf;
+                    '';
                   };
-                  networking.firewall.allowedTCPPorts = [ 80 ];
-                })
-              ];
-            };
+                };
+                networking.firewall.allowedTCPPorts = [ 80 ];
+              })
+            ];
+          };
 
           home = homeConfiguration {
             inherit system config;
@@ -197,36 +193,27 @@
           #ignore = true;
           system = "x86_64-linux";
 
-          config =
-            let
-              mkModule = path:
-                (args@{ config, lib, pkgs, ... }:
-                  import path ({
-                    # is there a better way to do this?
-                    pkgs = import inputs.unstable { inherit system; };
-                  } // removeAttrs args [ "pkgs" ]));
-            in
-            nixpkgs.lib.nixosSystem {
-              inherit system;
+          config = nixpkgs.lib.nixosSystem {
+            inherit system;
 
-              modules = [
-                ./modules/nix-flake-config.nix
-                flakePins
+            modules = [
+              ./modules/nix-flake-config.nix
+              flakePins
 
-                { nixpkgs.overlays = self.overlaysList system; }
-                {
-                  fileSystems."/" = {
-                    device = "/dev/disk/by-label/root";
-                    fsType = "btrfs";
-                  };
-                  boot.loader.grub.device = "/dev/vda";
-                }
-                speedy.nixosModule
-                inputs.mhctf.nixosModule
+              { nixpkgs.overlays = overlaysList; }
+              {
+                fileSystems."/" = {
+                  device = "/dev/disk/by-label/root";
+                  fsType = "btrfs";
+                };
+                boot.loader.grub.device = "/dev/vda";
+              }
+              speedy.nixosModule
+              inputs.mhctf.nixosModule
 
-                ./psyche-configuration.nix
-              ];
-            };
+              ./psyche-configuration.nix
+            ];
+          };
         };
 
         venus = rec {

@@ -27,7 +27,7 @@ let
         "${mod}+Shift+l" = "resize grow width 10px";
         "${mod}+Return" = "exec ${pb "alacritty"}";
         "Mod4+q" = "kill";
-        "Mod4+l" = "exec swaylock -F -i ~/Pictures/bg_gw_city_snow_night.jpg";
+        "Mod4+l" = "exec loginctl lock-session";
 
         "Ctrl+Mod4+Shift+4" = "exec ${
         pkgs.writeScript "screenshot.sh" ''
@@ -35,9 +35,10 @@ let
             ''
       }";
         "Mod4+Space" = ''
-          exec ${pb "j4-dmenu-desktop"} --dmenu="${pb "bemenu"} -i" --term="${
-                                    pb "alacritty"
-                                  }"
+          exec 'pgrep bemenu || \
+               ${pb "j4-dmenu-desktop"} \
+               --dmenu="${pb "bemenu"} -i" \
+               --term="${pb "alacritty"}"'
         '';
         "Mod4+Shift+f" = "fullscreen toggle";
         # --wrapper="${pkgs.systemd}/bin/systemd-run --user --scope "
@@ -105,17 +106,18 @@ let
     };
 
     extraConfig =
-      let lockCmd = "pgrep swaylock || swaylock -F -i ~/Pictures/bg_gw_city_snow_night.jpg";
+      let lockCmd = "swaylock -f -F -i ~/Pictures/bg_gw_city_snow_night.jpg";
       in ''
         for_window [class=".*"] inhibit_idle fullscreen
         # weird hack: assignment for firefox doesn't name it correctly
         # also: rename command is invalid in config ??
         # exec swaymsg rename workspace 1 to "1: web"
         exec swayidle -w \
-            timeout 300 '${lockCmd}' \
-            timeout 315 'loginctl lock-session' resume 'swaymsg "output * dpms on"' \
-            lock '${lockCmd}; swaymsg "output * dpms off"' \
-            unlock 'pkill swaylock' \
+            timeout 300 'loginctl lock-session' \
+            timeout 360 'swaymsg "output * dpms off"' \
+            resume 'swaymsg "output * dpms on"' \
+            lock '${lockCmd}' \
+            unlock 'pkill -9 swaylock' \
             before-sleep 'loginctl lock-session'
       '';
     systemdIntegration = true;
@@ -123,4 +125,68 @@ let
 in
 {
   wayland.windowManager.sway = wl-config;
+
+  home.packages = with pkgs; [
+    qt5ct
+
+    breeze-qt5
+    breeze-icons
+  ];
+
+  /*home.sessionVariables = {
+    QT_QPA_PLATFORMTHEME = "qt5ct";
+  };*/
+
+  qt = {
+    enable = true;
+    # platformTheme = "breeze";
+    style = {
+      name = "Breeze-Dark";
+      package = pkgs.libsForQt5.breeze-qt5;
+    };
+  };
+
+  gtk.enable = pkgs.hostPlatform.isLinux;
+
+  gtk.theme = {
+    package = pkgs.libsForQt5.breeze-gtk;
+    name = "Breeze-Dark"; # org.gnome.desktop.interface.gtk-theme
+  };
+
+  gtk.iconTheme = {
+    name = "Breeze-Dark";
+    package = pkgs.libsForQt5.breeze-gtk;
+  };
+
+  gtk.gtk3.extraConfig = {
+    gtk-application-prefer-dark-theme = 1;
+  };
+
+  dconf.settings = lib.mkIf pkgs.hostPlatform.isLinux {
+    "org/gnome/desktop/wm/preferences" = { theme = "Breeze-Dark"; };
+    "org/gnome/shell/extensions/user-theme" = { name = "Breeze-Dark"; };
+  };
+
+  /*
+    xdg.configFile."kdeglobals".text = lib.generators.toINI {} {
+    KDE = {
+      WidgetStyle = "Breeze";
+    };
+    General = {
+      ColorScheme = "BreezeDark";
+    };
+    };
+    xdg.dataFile."kstyle/themes/breezedark.themerc".text = lib.generators.toINI {} {
+    Misc.Name = "BreezeDark";
+    KDE = {
+      WidgetStyle = "Breeze";
+    };
+    General = {
+      ColorScheme = "BreezeDark";
+    };
+    };
+    xdg.configFile."Trolltech.conf".text = ''
+    [Qt]
+    style=BreezeDark
+  '';*/
 }

@@ -1,8 +1,10 @@
 { lib, pkgs, config, ... }:
-let unstable = pkgs.unstable;
-    jdk = pkgs.adoptopenjdk-hotspot-bin-16;
-    server = pkgs.minecraft-server-fabric;
-in {
+let
+  unstable = pkgs.unstable;
+  jdk = pkgs.adoptopenjdk-hotspot-bin-16;
+  server = pkgs.minecraft-server-fabric;
+in
+{
   services.minecraft-server = {
     enable = true;
     eula = true;
@@ -10,14 +12,14 @@ in {
     package = server;
     declarative = true;
 
-/*    jvmOpts = "-Xms4G -Xmx4G " +
-	"-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true";*/
+    /*    jvmOpts = "-Xms4G -Xmx4G " +
+    "-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true";*/
 
     openFirewall = true;
     serverProperties = {
-	    motd = "speedy's omnipotent toilet";
+      motd = "speedy's omnipotent toilet";
       white-list = true;
-	    difficulty = "normal";
+      difficulty = "normal";
       allow-flight = true;
       enable-rcon = true;
       "rcon.password" = "hunteringmyhunter2";
@@ -34,6 +36,7 @@ in {
       chaosdragon789 = "5bbf6f3a-839e-4b82-8101-53a9120f7789";
       evilsam1 = "00eb91d0-991e-4ddd-8416-d2c135b1a75d";
       benjamitis = "b7f4cec2-4f53-4fea-9d94-7458557e01b2";
+      genghiskhan76 = "7d38d797-2e80-4cd5-829d-a4f0c89fe4cd";
     };
   };
 }

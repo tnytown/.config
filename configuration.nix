@@ -20,9 +20,15 @@
     "vfio_iommu_type1"
     "vfio_virqfd"
   ];
+
+  # TODO(tny):
+  # https://github.com/torvalds/linux/blob/master/arch/x86/kvm/svm/svm.c#L203
+  # https://patchwork.kernel.org/project/kvm/cover/20210513113710.1740398-1-vkuznets@redhat.com/
   boot.extraModprobeConfig = ''
     options nct6683 force=1
+    options kvm_amd avic=1
   '';
+
   boot.kernelParams = [
     "amd_iommu=on" # vfio: should be enabled by default, paranoia
     "iommu=pt" # vfio: passthru
@@ -33,10 +39,10 @@
   boot.cleanTmpDir = true;
   boot.initrd.verbose = false;
 
-  powerManagement.cpuFreqGovernor = "schedutil";
+  powerManagement.cpuFreqGovernor = "performance";
   boot.supportedFilesystems = [ "ntfs" ];
 
-  boot.kernelPackages = pkgs.linuxPackagesOverride pkgs.linuxPackages_5_14;
+  boot.kernelPackages = pkgs.linuxPackagesOverride pkgs.linuxKernel.packages.linux_5_15;
   /*
     boot.kernelPackages = pkgs.linuxPackagesOverride (pkgs.linuxPackagesFor (pkgs.linux_testing.override {
     argsOverride = rec {
@@ -244,7 +250,7 @@
     mullvad-vpn
 
     qemu
-    OVMF-secureBoot
+    OVMFFull
     swtpm-tpm2
     tpm2-tools
     virt-manager

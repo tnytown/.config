@@ -1,5 +1,5 @@
 (final: prev: rec {
-  libtpms = prev.libtpms.overrideAttrs(o: rec {
+  libtpms = prev.libtpms.overrideAttrs (o: rec {
     version = "0.8.6";
     src = prev.fetchFromGitHub {
       owner = "stefanberger";
@@ -8,14 +8,14 @@
       hash = "sha256-XvugcpoFQhdCBBg7hOgsUzSn4ad7RUuAEkvyiPLg4Lw=";
     };
   });
-  OVMF = (prev.OVMF.override({ secureBoot = true; })).overrideAttrs (o: {
+  OVMF = (prev.OVMF.override ({ secureBoot = true; })).overrideAttrs (o: {
     buildFlags = o.buildFlags ++ [
       "-DTPM_ENABLE=TRUE"
       "-DTPM_CONFIG_ENABLE=TRUE"
     ];
   });
 
-  swtpm = prev.swtpm.overrideAttrs(o: rec {
+  swtpm = prev.swtpm.overrideAttrs (o: rec {
     version = "1860183c42a0d43b444cb8cf3aae71de4ed0b601";
     nativeBuildInputs = o.nativeBuildInputs ++ [ prev.python3 prev.makeWrapper ];
     patches = [ ./localstatedir.patch ];
@@ -36,7 +36,7 @@
       wrapProgram $out/share/swtpm/swtpm-localca --prefix PATH : ${prev.lib.makeBinPath [ prev.gnutls ]}
     '';
   });
-  factorio = prev.factorio.overrideAttrs(o: rec {
+  factorio = prev.factorio.overrideAttrs (o: rec {
     version = "1.1.36";
     name = "factorio-${version}";
     src = prev.fetchurl {
@@ -45,7 +45,7 @@
       sha256 = "sha256-iPPHSYCGo4g1UY6pCgi+wEtIQF9sodcp5gqvbzYVKvU=";
     };
   });
-  flashrom = prev.flashrom.overrideAttrs(o: {
+  flashrom = prev.flashrom.overrideAttrs (o: {
     version = "git";
     nativeBuildInputs = o.nativeBuildInputs ++ [ prev.git prev.cmocka ];
     # NB: getrevision.sh is excluded with gitattributes.
@@ -57,7 +57,7 @@
     };
   });
 
-  minecraft-server-fabric = prev.callPackage ./minecraft-server-fabric {};
+  minecraft-server-fabric = prev.callPackage ./minecraft-server-fabric { };
 
   alex = prev.stdenv.mkDerivation rec {
     pname = "alex";
@@ -94,37 +94,37 @@
       };
     });
     configurePhase = ''
-    runHook preConfigure
-    export HOME=$(mktemp -d)
-    export DOTNET_CLI_TELEMETRY_OPTOUT=1
-    export DOTNET_NOLOGO=1
-    dotnet nuget add source --name nixos "$PWD/nixos"
-    nuget init "$nugetDeps" "$PWD/nixos"
-    # FIXME: https://github.com/NuGet/Home/issues/4413
-    mkdir -p $HOME/.nuget/NuGet
-    cp $HOME/.config/NuGet/NuGet.Config $HOME/.nuget/NuGet
-    runHook postConfigure
+      runHook preConfigure
+      export HOME=$(mktemp -d)
+      export DOTNET_CLI_TELEMETRY_OPTOUT=1
+      export DOTNET_NOLOGO=1
+      dotnet nuget add source --name nixos "$PWD/nixos"
+      nuget init "$nugetDeps" "$PWD/nixos"
+      # FIXME: https://github.com/NuGet/Home/issues/4413
+      mkdir -p $HOME/.nuget/NuGet
+      cp $HOME/.config/NuGet/NuGet.Config $HOME/.nuget/NuGet
+      runHook postConfigure
     '';
 
     buildPhase = ''
-    runHook preBuild
-    cd src
-    dotnet nuget disable source "NuGet official package source"
-    dotnet nuget disable source "nuget.org"
-    dotnet publish Alex \
-      --configuration Release \
-      --runtime ${runtimeId} \
-      --no-self-contained \
-      --output $out/bin/alex
-    runHook postBuild
+      runHook preBuild
+      cd src
+      dotnet nuget disable source "NuGet official package source"
+      dotnet nuget disable source "nuget.org"
+      dotnet publish Alex \
+        --configuration Release \
+        --runtime ${runtimeId} \
+        --no-self-contained \
+        --output $out/bin/alex
+      runHook postBuild
     '';
     installPhase = ''
-    runHook preInstall
-    makeWrapper ${prev.dotnet-aspnetcore}/bin/dotnet $out/bin/alex \
-      #--suffix LD_LIBRARY_PATH : "${prev.lib.makeLibraryPath []}" \
-      #--add-flags "$out/opt/jellyfin/jellyfin.dll"
-    runHook postInstall
-  '';
+      runHook preInstall
+      makeWrapper ${prev.dotnet-aspnetcore}/bin/dotnet $out/bin/alex \
+        #--suffix LD_LIBRARY_PATH : "${prev.lib.makeLibraryPath []}" \
+        #--add-flags "$out/opt/jellyfin/jellyfin.dll"
+      runHook postInstall
+    '';
   };
 
   hawck = prev.stdenv.mkDerivation rec {
@@ -134,8 +134,9 @@
     nativeBuildInputs = [ prev.meson prev.ninja prev.pkg-config prev.makeWrapper ];
     buildInputs = [ prev.lua5_3 prev.libnotify prev.catch2 prev.python3 ];
 
-    mesonFlags = let etc = "${placeholder "out"}/etc";
-                 in [ "-Dhawck_cfg_dir=${etc}" "-Dmodules_load_dir=${etc}/modules-load.d" "-Dudev_rules_dir=${etc}/udev/rules.d" ];
+    mesonFlags =
+      let etc = "${placeholder "out"}/etc";
+      in [ "-Dhawck_cfg_dir=${etc}" "-Dmodules_load_dir=${etc}/modules-load.d" "-Dudev_rules_dir=${etc}/udev/rules.d" ];
     src = prev.fetchFromGitHub {
       owner = "snyball";
       repo = "Hawck";
@@ -144,25 +145,26 @@
     };
 
     patchPhase = ''
-    substituteInPlace bin/meson.build --replace "systemd_prefix = '/usr/lib/systemd'" "systemd_prefix = '${placeholder "out"}/lib/systemd'"
-    substituteInPlace src/Lua/Keymap.lua --replace '/usr/share/kbd/keymaps' '${prev.kbd}/share/keymaps'
-    substituteInPlace bin/hawck-install.sh.in --replace "#!/bin/bash" "#!${prev.bash}/bin/bash"
-    substituteInPlace src/scripts/hawck-add.sh --replace "lua5.3" "echo \$script_path; cat \$script_path; LUA_PATH=\$LUA_PATH';'\$(realpath \$HOME/.local/share/hawck/scripts/)'/?.lua' ${prev.lua5_3}/bin/lua"
-    substituteInPlace src/Version.cpp --replace '-' ""
-    substituteInPlace src/KBDDaemon.cpp --replace '(IN_CREATE | IN_MODIFY)' 'IN_ATTRIB'
-'';
-    postFixup = let luaPath = "$out/share/hawck/LLib/?.lua;$out/share/hawck/?.lua";
-                in ''
-    wrapProgram "$out/bin/hawck-add" --set LUA_PATH "${luaPath}"
-    wrapProgram "$out/bin/hawck-macrod" --set LUA_PATH "${luaPath}" \
-                                        --prefix PATH : "${prev.lib.makeBinPath [ prev.gzip ]}" \
-                                        --prefix PATH : "$out/bin"
-'';
+      substituteInPlace bin/meson.build --replace "systemd_prefix = '/usr/lib/systemd'" "systemd_prefix = '${placeholder "out"}/lib/systemd'"
+      substituteInPlace src/Lua/Keymap.lua --replace '/usr/share/kbd/keymaps' '${prev.kbd}/share/keymaps'
+      substituteInPlace bin/hawck-install.sh.in --replace "#!/bin/bash" "#!${prev.bash}/bin/bash"
+      substituteInPlace src/scripts/hawck-add.sh --replace "lua5.3" "echo \$script_path; cat \$script_path; LUA_PATH=\$LUA_PATH';'\$(realpath \$HOME/.local/share/hawck/scripts/)'/?.lua' ${prev.lua5_3}/bin/lua"
+      substituteInPlace src/Version.cpp --replace '-' ""
+      substituteInPlace src/KBDDaemon.cpp --replace '(IN_CREATE | IN_MODIFY)' 'IN_ATTRIB'
+    '';
+    postFixup =
+      let luaPath = "$out/share/hawck/LLib/?.lua;$out/share/hawck/?.lua";
+      in ''
+        wrapProgram "$out/bin/hawck-add" --set LUA_PATH "${luaPath}"
+        wrapProgram "$out/bin/hawck-macrod" --set LUA_PATH "${luaPath}" \
+                                            --prefix PATH : "${prev.lib.makeBinPath [ prev.gzip ]}" \
+                                            --prefix PATH : "$out/bin"
+      '';
 
     # DESTDIR = "${placeholder "out"}";
   };
 
-  rnnoise-plugin = prev.rnnoise-plugin.overrideAttrs(o: {
+  rnnoise-plugin = prev.rnnoise-plugin.overrideAttrs (o: {
     version = "e391a9b";
     src = prev.fetchFromGitHub {
       owner = "werman";
@@ -183,45 +185,13 @@
     };
   };
 
-  git-credential-keepassxc = prev.rustPlatform.buildRustPackage rec {
-    pname = "git-credential-keepassxc";
-    version = "0.4.3";
-
-    buildInputs = prev.lib.optionals (prev.targetPlatform.isDarwin) [ prev.darwin.apple_sdk.frameworks.IOKit ];
-    src = prev.fetchFromGitHub {
-      owner = "Frederick888";
-      repo = pname;
-      rev = "v${version}";
-      sha256 = "1kzq6mnffxfsh1q43c99aq2mgm60jp47cs389vg8qpd1cqh15nj0";
-    };
-
-    cargoSha256 = "sha256-fglAwQB+UdOJeBcg9NForaxrel7ME9p8VP4k4Rj0jtU=";
-
-    meta = with prev.lib; {
-      description = "Helper that allows Git (and shell scripts) to use KeePassXC as credential store";
-      homepage = "https://github.com/Frederick888/git-credential-keepassxc";
-      license = licenses.gpl3Only;
-      maintainers = [ "tny" ];
-    };
-
-    doCheck = false;
-  };
-
-  discord = prev.discord.overrideAttrs(_: rec {
-    version = "0.0.15";
-    src = prev.fetchurl {
-      url = "https://dl.discordapp.net/apps/linux/${version}/discord-${version}.tar.gz";
-      hash = "sha256-re3pVOnGltluJUdZtTlSeiSrHULw1UjFxDCdGj/Dwl4=";
-    };
-  });
-
-  xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs(_: rec {
+  xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (_: rec {
     version = "9ba958c7d2a2ab11ac8014263e153c1236fb3014";
     nativeBuildInputs = _.nativeBuildInputs ++ [ prev.scdoc prev.iniparser ];
     buildInputs = _.buildInputs ++ [ prev.iniparser ];
     postPatch = ''
-substituteInPlace meson.build --replace "join_paths(get_option('prefix'),get_option('libdir'))" "'${prev.iniparser}/lib'"
-'';
+      substituteInPlace meson.build --replace "join_paths(get_option('prefix'),get_option('libdir'))" "'${prev.iniparser}/lib'"
+    '';
     mesonFlags = [ "-Dman-pages=enabled" "-Dsystemd=enabled" "-Dsd-bus-provider=libsystemd" ];
     src = prev.fetchFromGitHub {
       owner = "emersion";
@@ -231,10 +201,17 @@ substituteInPlace meson.build --replace "join_paths(get_option('prefix'),get_opt
     };
   });
 
-  ethminer = prev.ethminer.overrideAttrs(_: rec {
+  ethminer = prev.ethminer.overrideAttrs (_: rec {
     buildInputs = with prev; [
-      cli11 boost opencl-headers mesa ethash opencl-info
-      ocl-icd openssl jsoncpp
+      cli11
+      boost
+      opencl-headers
+      mesa
+      ethash
+      opencl-info
+      ocl-icd
+      openssl
+      jsoncpp
     ];
     cmakeFlags = [
       "-DHUNTER_ENABLED=OFF"
@@ -245,7 +222,7 @@ substituteInPlace meson.build --replace "join_paths(get_option('prefix'),get_opt
     ];
   });
 
-  obs-studio = prev.obs-studio.overrideAttrs(_: rec {
+  obs-studio = prev.obs-studio.overrideAttrs (_: rec {
     version = "27.0.0-rc2";
     src = prev.fetchFromGitHub {
       owner = "obsproject";
@@ -256,7 +233,11 @@ substituteInPlace meson.build --replace "join_paths(get_option('prefix'),get_opt
     };
   });
 
-  wlgreet = prev.greetd.wlgreet.overrideAttrs(_: rec {
+  shotcut = prev.shotcut.overrideAttrs (o: rec {
+    buildInputs = o.buildInputs ++ [ prev.mlt ];
+  });
+
+  wlgreet = prev.greetd.wlgreet.overrideAttrs (_: rec {
     version = "2366f870440fe9ab9dd5270edc47ec54ee24ff5d";
     src = prev.fetchFromSourcehut {
       owner = "~kennylevinsen";
@@ -266,7 +247,7 @@ substituteInPlace meson.build --replace "join_paths(get_option('prefix'),get_opt
     };
   });
 
-  swayidle = prev.swayidle.overrideAttrs(o: {
+  swayidle = prev.swayidle.overrideAttrs (o: {
     pname = "swayidle";
     version = "1.8";
     src = prev.fetchFromGitHub {
@@ -280,28 +261,28 @@ substituteInPlace meson.build --replace "join_paths(get_option('prefix'),get_opt
   linuxPackagesOverride = linuxPackages:
     linuxPackages.extend (lfinal: lprev: {
       corefreq =
-      let kernel = lprev.kernel;
-      in final.stdenv.mkDerivation rec {
-        pname = "corefreq";
-        version = "develop";
+        let kernel = lprev.kernel;
+        in final.stdenv.mkDerivation rec {
+          pname = "corefreq";
+          version = "develop";
 
-        passthru.moduleName = "corefreqk";
+          passthru.moduleName = "corefreqk";
 
-        nativeBuildInputs = [ kernel.moduleBuildDependencies ];
+          nativeBuildInputs = [ kernel.moduleBuildDependencies ];
 
-        makeFlags = [
-          "KERNELDIR=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
-          "INSTALL_MOD_PATH=$(out)"
-          "PREFIX=$(out)"
-          "UI_TRANSPARENCY=1"
-        ];
+          makeFlags = [
+            "KERNELDIR=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
+            "INSTALL_MOD_PATH=$(out)"
+            "PREFIX=$(out)"
+            "UI_TRANSPARENCY=1"
+          ];
 
-        src = final.fetchFromGitHub {
-          owner = "cyring";
-          repo = pname;
-          rev = "8d81912c5bc63112dc321157f9d23301731086b7";
-          hash = "sha256-HSFGBEmMhP5vUv8dnI14WXRjcfb8KhMcKp2sQXJNcp8=";
+          src = final.fetchFromGitHub {
+            owner = "cyring";
+            repo = pname;
+            rev = "8d81912c5bc63112dc321157f9d23301731086b7";
+            hash = "sha256-HSFGBEmMhP5vUv8dnI14WXRjcfb8KhMcKp2sQXJNcp8=";
+          };
         };
-      };
     });
 })
