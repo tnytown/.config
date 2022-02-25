@@ -165,6 +165,8 @@
   programs.bash.initExtra = ''[[ ! "$0" = "bash" ]] && exec fish'';
   programs.zsh.enable = true;
   programs.zsh.initExtra = ''[[ ! "$0" = "zsh" ]] && exec fish'';
+
+
   programs.fish.enable = true;
   programs.fish.interactiveShellInit = ''
     function __fish_command_not_found_handler --on-event fish_command_not_found
