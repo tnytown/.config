@@ -151,6 +151,11 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
 
   programs.bash.enable = true;
   programs.bash.initExtra = ''[[ ! "$0" = "bash" ]] && exec fish'';
+  programs.zsh.enable = true;
+  programs.zsh.initExtra = ''
+    eval $(/opt/homebrew/bin/brew shellenv)
+  '';
+
   programs.fish.enable = true;
   programs.fish.interactiveShellInit = ''
     function __fish_command_not_found_handler --on-event fish_command_not_found
