@@ -211,7 +211,11 @@
   programs.alacritty.enable = true;
   xdg.configFile."alacritty".source = ./alacritty;
 
-  programs.gpg.enable = true;
+  programs.gpg = {
+    enable = true;
+    scdaemonSettings = { disable-ccid = true; };
+  };
+
   services.gpg-agent = lib.mkIf pkgs.stdenv.isLinux {
     enable = true;
     enableSshSupport = true;
