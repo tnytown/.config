@@ -102,7 +102,7 @@
     # "hawck/scripts/LLib".source = "${pkgs.hawck}/share/hawck/LLib";
   };
 
-  programs.obs-studio = {
+  programs.obs-studio = lib.mkIf pkgs.stdenv.isLinux {
     enable = true;
     plugins = with pkgs.obs-studio-plugins; [ wlrobs obs-gstreamer ];
   };
@@ -159,10 +159,12 @@
 
   home.sessionVariables = {
     EDITOR = "emacsclient";
-  };
+  }; 
 
   programs.bash.enable = true;
   programs.bash.initExtra = ''[[ ! "$0" = "bash" ]] && exec fish'';
+  programs.zsh.enable = true;
+  programs.zsh.initExtra = ''[[ ! "$0" = "zsh" ]] && exec fish'';
   programs.fish.enable = true;
   programs.fish.interactiveShellInit = ''
     function __fish_command_not_found_handler --on-event fish_command_not_found
@@ -174,10 +176,7 @@
   programs.direnv = {
     enable = true;
     nix-direnv.enable = true;
-    # nix-direnv.enableFlakes = true;
   };
-
-  # programs.htop.showCpuFrequency = true;
 
   programs.git = {
     enable = true;
@@ -187,9 +186,8 @@
     extraConfig = {
       init.defaultBranch = "main";
 
-      user.signingKey = "6EB359BA";
-      commit.gpgsign = true;
-
+      user.signingKey = "6EB359BA"; 
+      commit.gpgSign = "true";
       credential.helper =
         "${pkgs.git-credential-keepassxc}/bin/git-credential-keepassxc --unlock 0";
       core.excludesFile = (pkgs.writeText ".gitignore" ''
@@ -214,7 +212,7 @@
   xdg.configFile."alacritty".source = ./alacritty;
 
   programs.gpg.enable = true;
-  services.gpg-agent = {
+  services.gpg-agent = lib.mkIf pkgs.stdenv.isLinux {
     enable = true;
     enableSshSupport = true;
     extraConfig = ''

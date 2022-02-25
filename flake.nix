@@ -14,7 +14,7 @@
     nixpkgs-overlay.inputs.nixpkgs.follows = "nixpkgs";
 
     emacs.url = "github:nix-community/emacs-overlay";
-    sops-nix.url = "/home/tny/dev/sops-nix";
+    sops-nix.url = "github:tnytown/sops-nix/age-support";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
     rocm.url = "github:nixos-rocm/nixos-rocm";
@@ -31,13 +31,13 @@
     cachix.url = "github:jonascarpay/declarative-cachix";
     cachix.flake = false;
 
-    speedy.url = "/home/tny/dev/speedy/";
+    speedy.url = "/Users/tnytown/Documents/sw/flake-template";
     speedy.inputs.nixpkgs.follows = "nixpkgs";
-    fishcgi.url = "/home/tny/dev/fish-cgi/";
-    binja.url = "/home/tny/re/";
+    fishcgi.url = "/Users/tnytown/Documents/sw/flake-template";
+    binja.url = "/Users/tnytown/Documents/sw/flake-template";
     binja.inputs.nixpkgs.follows = "nixpkgs";
 
-    mhctf.url = "/home/tny/dev/logo";
+    mhctf.url = "/Users/tnytown/Documents/sw/flake-template";
     mhctf.inputs.nixpkgs.follows = "nixpkgs";
 
     nixpkgs-format.url = "github:nix-community/nixpkgs-fmt";
@@ -75,7 +75,7 @@
       };
       overlaysList = lib.mapAttrsToList (s: t: t) overlays;
     in
-    flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ]
+    flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-darwin" ]
       (system:
       let pkgs = nixpkgs.legacyPackages.${system};
       in rec {
@@ -237,25 +237,49 @@
           };
         };
 
-        venus = rec {
-          system = "x86_64-darwin";
+       leliel = rec {
+            system = "aarch64-darwin";
 
-          config = darwin.lib.darwinSystem {
-            modules = [
-              ./modules/nix-flake-config.nix
-              flakePins
-              ./darwin-configuration.nix
-            ];
+            config = darwin.lib.darwinSystem {
+              inherit system;
+              modules = [
+                ./modules/nix-flake-config.nix
+                flakePins
+                ./darwin-configuration.nix
+              ];
+            };
+
+            home = homeConfiguration {
+              inherit system config;
+
+              homeDirectory = "/Users/tnytown/";
+            };
+
           };
+       zadkiel = rec {
+            system = "aarch64-darwin";
 
-          home = homeConfiguration {
-            inherit system config;
+            config = darwin.lib.darwinSystem {
+              inherit system;
+              modules = [
+                ./modules/nix-flake-config.nix
+                flakePins
+                ./darwin-configuration.nix
+              ];
+            };
 
-            homeDirectory = "/Users/apan/";
-            extraImports = [ ./modules/hm/ext-ssh.nix ];
-          };
+            home = homeConfiguration {
+              inherit system config;
+
+              homeDirectory = "/Users/tnytown/";
+            };
+
+          }; 
         };
-      };
+        
+        #};
+
+      #};
 
       # cachix = (import inputs.cachix);
       darwinConfigurations = (builtins.mapAttrs (k: v: v.config)

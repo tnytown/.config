@@ -180,8 +180,8 @@
 
     buildInputs = [ prev.fuse ];
     src = builtins.fetchTarball {
-      url = "https://github.com/libyal/libbde/releases/download/20200724/libbde-alpha-20200724.tar.gz";
-      sha256 = "1qh3m3f8jb53p9241v53ws0if2874v90fadjs86lm8fgba0zfaak";
+      url = "https://github.com/libyal/libbde/releases/download/20210605/libbde-alpha-20210605.tar.gz";
+      sha256 = "1a7jga61plp0wxwa5kbyzwc1hzgv7yxakbx7yibwm1j6yzc3dwgk";
     };
   };
 

@@ -4,18 +4,17 @@
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
-        ],
-        "utils": "utils"
+        ]
       },
       "locked": {
-        "lastModified": 1631675810,
-        "narHash": "sha256-YzLL2zVlA+EEWmnlb3/YhavwFtUm7HA48U+57OFPQTI=",
-        "path": "/home/tny/re",
-        "type": "path"
+        "lastModified": 0,
+        "narHash": "sha256-uBL+RLnBRpyIl8eSPwR7oo2Liqs1qTG/HNPjIUg21Vo=",
+        "type": "git",
+        "url": "file:///Users/tnytown/Documents/sw/flake-template"
       },
       "original": {
-        "path": "/home/tny/re",
-        "type": "path"
+        "type": "git",
+        "url": "file:///Users/tnytown/Documents/sw/flake-template"
       }
     },
     "cachix": {
@@ -91,7 +90,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "utils": "utils_2"
+        "utils": "utils"
       },
       "locked": {
         "lastModified": 1674127017,
@@ -176,14 +175,14 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1623345862,
-        "narHash": "sha256-QVc6C2YSX/LSeAkeL01O+wUhCRPODOYhvvzRHuZqarU=",
+        "lastModified": 0,
+        "narHash": "sha256-uBL+RLnBRpyIl8eSPwR7oo2Liqs1qTG/HNPjIUg21Vo=",
         "type": "git",
-        "url": "file:///home/tny/dev/fish-cgi"
+        "url": "file:///Users/tnytown/Documents/sw/flake-template"
       },
       "original": {
         "type": "git",
-        "url": "file:///home/tny/dev/fish-cgi"
+        "url": "file:///Users/tnytown/Documents/sw/flake-template"
       }
     },
     "flake-compat": {
@@ -385,7 +384,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "utils": "utils_3"
+        "utils": "utils_2"
       },
       "locked": {
         "lastModified": 1675303228,
@@ -434,14 +433,14 @@
         ]
       },
       "locked": {
-        "lastModified": 1637350794,
-        "narHash": "sha256-yXOFvN8yH0XX3ugtrlKu3ios2jwDJUijyhhw7heWekc=",
+        "lastModified": 0,
+        "narHash": "sha256-uBL+RLnBRpyIl8eSPwR7oo2Liqs1qTG/HNPjIUg21Vo=",
         "type": "git",
-        "url": "file:///home/tny/dev/logo"
+        "url": "file:///Users/tnytown/Documents/sw/flake-template"
       },
       "original": {
         "type": "git",
-        "url": "file:///home/tny/dev/logo"
+        "url": "file:///Users/tnytown/Documents/sw/flake-template"
       }
     },
     "nixpkgs": {
@@ -746,13 +745,17 @@
       },
       "locked": {
         "lastModified": 1624186328,
-        "narHash": "sha256-d7PIxZMmphHoRXPSVXAr/hxYyjQZeHygQRbX4heuMmg=",
-        "type": "git",
-        "url": "file:///home/tny/dev/sops-nix"
+        "narHash": "sha256-F7IqV1x4QoDToHtQ45BSt2upMtJ671SMWA6DAZSArcM=",
+        "owner": "tnytown",
+        "repo": "sops-nix",
+        "rev": "e38bee392a5d97e192a198ad5a0f765d7cf8b9b5",
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "file:///home/tny/dev/sops-nix"
+        "owner": "tnytown",
+        "ref": "age-support",
+        "repo": "sops-nix",
+        "type": "github"
       }
     },
     "speedy": {
@@ -762,14 +765,14 @@
         ]
       },
       "locked": {
-        "lastModified": 1600473806,
-        "narHash": "sha256-4koG5p5YinMgo1h94FIXhQPsK3P71J2/dxABXPufq3U=",
+        "lastModified": 0,
+        "narHash": "sha256-uBL+RLnBRpyIl8eSPwR7oo2Liqs1qTG/HNPjIUg21Vo=",
         "type": "git",
-        "url": "file:///home/tny/dev/speedy"
+        "url": "file:///Users/tnytown/Documents/sw/flake-template"
       },
       "original": {
         "type": "git",
-        "url": "file:///home/tny/dev/speedy"
+        "url": "file:///Users/tnytown/Documents/sw/flake-template"
       }
     },
     "unstable": {
@@ -789,21 +792,6 @@
     },
     "utils": {
       "locked": {
-        "lastModified": 1614513358,
-        "narHash": "sha256-LakhOx3S1dRjnh0b5Dg3mbZyH0ToC9I8Y2wKSkBaTzU=",
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "rev": "5466c5bbece17adaab2d82fae80b46e807611bf3",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "type": "github"
-      }
-    },
-    "utils_2": {
-      "locked": {
         "lastModified": 1667395993,
         "narHash": "sha256-nuEHfE/LcWyuSWnS8t12N1wc105Qtau+/OdUAjtQ0rA=",
         "owner": "numtide",
@@ -817,7 +805,7 @@
         "type": "github"
       }
     },
-    "utils_3": {
+    "utils_2": {
       "locked": {
         "lastModified": 1667395993,
         "narHash": "sha256-nuEHfE/LcWyuSWnS8t12N1wc105Qtau+/OdUAjtQ0rA=",
