@@ -144,7 +144,11 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
   services.syncthing.enable = pkgs.hostPlatform.isLinux;
 
   home.sessionVariables = { EDITOR = "emacsclient"; };
-  programs.gpg.enable = true;
+  programs.gpg = {
+    enable = true;
+    scdaemonSettings = { disable-ccid = true; };
+  };
+
   programs.bash.enable = true;
   programs.bash.initExtra = ''[[ ! "$0" = "bash" ]] && exec fish'';
   programs.fish.enable = true;
