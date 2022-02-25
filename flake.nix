@@ -26,25 +26,25 @@
     cachix.url = "github:jonascarpay/declarative-cachix";
     cachix.flake = false;
 
-    speedy.url = "/home/tny/dev/speedy/";
-    speedy.inputs.nixpkgs.follows = "nixpkgs";
-    fishcgi.url = "/home/tny/dev/fish-cgi/";
-    binja.url = "/home/tny/re/";
-    binja.inputs.nixpkgs.follows = "nixpkgs";
+    # speedy.url = "/home/tny/dev/speedy/";
+    # speedy.inputs.nixpkgs.follows = "nixpkgs";
+    # fishcgi.url = "/home/tny/dev/fish-cgi/";
+    #
+    # binja.url = "/home/tny/re/";
+    # binja.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   # Cargo culted.
   # https://github.com/nix-community/home-manager/issues/1538#issuecomment-706627100
   outputs = inputs@{ self, flake-utils, nixpkgs, unstable, darwin, sops-nix
-    , rocm, home-manager, deploy-rs, cachix, speedy, ... }:
+    , rocm, home-manager, deploy-rs, cachix, /*speedy,*/ ... }:
     let
       lib = nixpkgs.lib;
-      system = "x86_64-linux";
       flakePins = {
         system.nix-flake-config.systemFlake = self;
         system.nix-flake-config.nixpkgsFlake = nixpkgs;
       };
-    in flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ] (system:
+    in flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" ] (system:
       let pkgs = nixpkgs.legacyPackages.${system};
       in rec {
         devShell = pkgs.mkShell {
@@ -54,7 +54,7 @@
             (pkgs.writeShellScriptBin "nrb"
               "sudo nixos-rebuild -L switch --flake .")
             (pkgs.writeShellScriptBin "hrb"
-              "nix build --show-trace -L .#homeConfigurations.navi.activationPackage && result/activate")
+              "nix build --show-trace -L .#homeConfigurations.$(hostname).activationPackage && result/activate")
             nixfmt
 
             (pkgs.callPackage sops-nix { }).sops-age-hook
@@ -72,7 +72,7 @@
                };
              });
           */
-          personal = (import ./overlays/overlays.nix);
+          personal = lib.traceVal (import ./overlays/overlays.nix);
         };
 
         legacyPackages = let
@@ -152,10 +152,10 @@
                   systemd.services.hawck-inputd.enable = false;
                   # environment.systemPackages = [ inputs.binja.defaultPackage.${system} ];
                 }
-                inputs.fishcgi.nixosModule
+                # inputs.fishcgi.nixosModule
                 ({ config, ... }: {
                   services.nginx.enable = true;
-                  services.fishcgi.enable = true;
+                  /* services.fishcgi.enable = true;
                   services.nginx.virtualHosts."localhost" = {
                     default = true;
                     root = "/var/lib/fishcgi/";
@@ -169,7 +169,7 @@
                         include ${config.services.nginx.package}/conf/fastcgi.conf;
                       '';
                     };
-                  };
+                  };*/
                   networking.firewall.allowedTCPPorts = [ 80 ];
                 })
               ];
@@ -208,17 +208,18 @@
                   };
                   boot.loader.grub.device = "/dev/vda";
                 }
-                speedy.nixosModule
+                # speedy.nixosModule
 
                 ./psyche-configuration.nix
               ];
             };
           };
 
-          venus = rec {
-            system = "x86_64-darwin";
+          leliel = rec {
+            system = "aarch64-darwin";
 
             config = darwin.lib.darwinSystem {
+              inherit system;
               modules = [
                 ./modules/nix-flake-config.nix
                 flakePins
@@ -231,6 +232,7 @@
 
               homeDirectory = "/Users/apan/";
             };
+
           };
         };
 

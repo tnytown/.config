@@ -144,6 +144,7 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
   services.syncthing.enable = pkgs.hostPlatform.isLinux;
 
   home.sessionVariables = { EDITOR = "emacsclient"; };
+  programs.gpg.enable = true;
   programs.bash.enable = true;
   programs.bash.initExtra = ''[[ ! "$0" = "bash" ]] && exec fish'';
   programs.fish.enable = true;
@@ -157,18 +158,16 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
   programs.direnv = {
     enable = true;
     nix-direnv.enable = true;
-    nix-direnv.enableFlakes = true;
   };
-
-  programs.htop.showCpuFrequency = true;
 
   programs.git = {
     enable = true;
     userName = "Andrew Pan";
-    userEmail = "known@unown.me";
+    userEmail = "a@tny.town";
 
     extraConfig = {
       init.defaultBranch = "main";
+      commit.gpgSign = "true";
       credential.helper =
         "${pkgs.git-credential-keepassxc}/bin/git-credential-keepassxc --unlock 0";
       core.excludesFile = (pkgs.writeText ".gitignore" ''
