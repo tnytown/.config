@@ -20,6 +20,9 @@
     home-manager.url = "github:nix-community/home-manager/master";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
+    nixpkgs-overlay.url = "github:tnytown/nixpkgs-overlay-tny";
+    nixpkgs-overlay.inputs.nixpkgs.follows = "nixpkgs";
+
     deploy-rs.url = "github:serokell/deploy-rs";
     deploy-rs.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -36,7 +39,7 @@
 
   # Cargo culted.
   # https://github.com/nix-community/home-manager/issues/1538#issuecomment-706627100
-  outputs = inputs@{ self, flake-utils, nixpkgs, unstable, darwin, sops-nix
+  outputs = inputs@{ self, flake-utils, nixpkgs, unstable, darwin, sops-nix, nixpkgs-overlay
     , rocm, home-manager, deploy-rs, cachix, /*speedy,*/ ... }:
     let
       lib = nixpkgs.lib;
@@ -73,6 +76,7 @@
              });
           */
           personal = lib.traceVal (import ./overlays/overlays.nix);
+	  tiny = nixpkgs-overlay.overlay;
         };
 
         legacyPackages = let
@@ -87,13 +91,16 @@
 
         # this is factored out to account for the disparate home directory locations that I deal with,
         # namely macOS's /Users vs traditionally Linux's /home.
-        homeConfiguration = { system, config, homeDirectory, username ? "tny" }:
+        homeConfiguration = { system, config, homeDirectory, username ? "tnytown" }:
           home-manager.lib.homeManagerConfiguration {
-            inherit system homeDirectory username;
-            configuration = {
+            # inherit system homeDirectory username;
+	    inherit username;
+	    pkgs = nixpkgs.legacyPackages.${system};
+	    modules = [ ./home.nix ];
+            /* configuration = {
               nixpkgs.overlays = overlaysList system;
               imports = [ ./home.nix ];
-            };
+            }; */
           };
 
         machines = {
@@ -230,7 +237,7 @@
             home = homeConfiguration {
               inherit system config;
 
-              homeDirectory = "/Users/apan/";
+              homeDirectory = "/Users/tnytown/";
             };
 
           };

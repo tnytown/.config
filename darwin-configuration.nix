@@ -27,10 +27,6 @@ in {
   #  launchctl setenv DYLD_INSERT_LIBRARIES ${appenv}/lib/libappenv.dylib
   #  '';
 
-  # Use a custom configuration.nix location.
-  # $ darwin-rebuild switch -I darwin-config=$HOME/.config/nixpkgs/darwin/configuration.nix
-  # environment.darwinConfig = "$HOME/.config/nixpkgs/darwin/configuration.nix";
-
   # Auto upgrade nix package and the daemon service.
   services.nix-daemon.enable = true;
 
@@ -41,7 +37,6 @@ in {
          ProxyJump shiny.unown.me
     Host shiny.unown.me
          User root
-         IdentityFile /Users/apan/.ssh/id_rsa
   '';
 
   environment.etc."ssh/sshd_config".text = ''

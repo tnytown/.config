@@ -36,8 +36,13 @@
 
     pkgs.ffmpeg
     pkgs.exiftool
-    pkgs.python3Packages.binwalk
-  ] ++ (if pkgs.stdenv.isLinux then [
+    pkgs.python3Packages.binwalk 
+  ] ++
+  (with pkgs; [
+    racket
+    emacsMacport
+  ])
+  ++ (if pkgs.stdenv.isLinux then [
     # pkgs.jetbrains.idea-ultimate
     pkgs.osu-lazer
     pkgs.rnnoise-plugin
@@ -154,6 +159,7 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
   programs.zsh.enable = true;
   programs.zsh.initExtra = ''
     eval $(/opt/homebrew/bin/brew shellenv)
+    [[ "$0" == '-zsh' ]] && exec fish
   '';
 
   programs.fish.enable = true;
@@ -200,6 +206,19 @@ ln -s ${pkgs.adoptopenjdk-hotspot-bin-16}/bin/java $out/bin/java16
   #programs.alacritty.settings = ''
   #
   #'';
+
+  home.activation = lib.mkIf pkgs.stdenv.isDarwin {
+    aliasApplications = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      app_folder=$(echo ~/Applications);
+      for app in $(find "$genProfilePath/home-path/Applications" -type l); do
+	echo "app befor: $app"
+	app=$(realpath "$app")
+	echo "app after: $app"
+        $DRY_RUN_CMD rm -f $app_folder/$(basename $app)
+        $DRY_RUN_CMD osascript -e "tell app \"Finder\"" -e "make new alias file at POSIX file \"$app_folder\" to POSIX file \"$app\"" -e "set name of result to \"$(basename $app)\"" -e "end tell"
+      done
+    '';
+  };
 
   gtk.enable = pkgs.hostPlatform.isLinux;
   gtk.theme.name = "Nordic";
