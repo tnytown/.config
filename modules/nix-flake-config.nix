@@ -67,7 +67,7 @@ in
           '';
       }
       (optionalAttrs pkgs.stdenv.isLinux {
-        autoOptimiseStore = true;
+        settings.auto-optimise-store = true;
         gc.dates = "weekly";
       })
     ];

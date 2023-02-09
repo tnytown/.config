@@ -28,21 +28,24 @@
     options nct6683 force=1
     options kvm_amd avic=1
   '';
-
-  boot.kernelParams = [
-    "amd_iommu=on" # vfio: should be enabled by default, paranoia
-    "iommu=pt" # vfio: passthru
-  ];
-  hardware.cpu.amd.updateMicrocode = true;
-
-  boot.initrd.kernelModules = [ "amdgpu" ];
+ 
+  boot.initrd.kernelModules = [ "amdgpu" "i2c_algo_bit" "i2c_core" "i2c_designware_core" "i2c_designware_pci" ];
   boot.cleanTmpDir = true;
   boot.initrd.verbose = false;
 
   powerManagement.cpuFreqGovernor = "performance";
-  boot.supportedFilesystems = [ "ntfs" ];
+  boot.supportedFilesystems = [ "ntfs" "zfs" ];
+  boot.kernelPatches = [
+    /*{
+      name = "nested_AVIC";
+      patch = builtins.fetchurl {
+        url = "https://patchwork.kernel.org/series/619279/mbox/";
+        sha256 = "sha256:0di0ivpwdpmgzgxryd4kf3mf27g38d6x74qr1a5rxm7a19anw6gh";
+      };
+    }*/
+  ];
 
-  boot.kernelPackages = pkgs.linuxPackagesOverride pkgs.linuxKernel.packages.linux_5_15;
+  boot.kernelPackages = pkgs.linuxPackagesOverride pkgs.linuxKernel.packages.linux_6_1; #pkgs.linuxKernel.packages.latest;
   /*
     boot.kernelPackages = pkgs.linuxPackagesOverride (pkgs.linuxPackagesFor (pkgs.linux_testing.override {
     argsOverride = rec {
@@ -57,6 +60,7 @@
   }));*/
 
   networking.hostName = "navi";
+  networking.hostId = "c6229378";
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Set your time zone.
@@ -71,13 +75,28 @@
   networking.wireless.iwd = {
     enable = true;
     settings = {
-      General.EnableNetworkConfiguration = true;
+      General.EnableNetworkConfiguration = false;
     };
   };
   networking.useNetworkd = true;
+
+  systemd.network.networks."10-wlan0-selfmanaged" = {
+    name = "wlan0";
+    DHCP = "ipv4";
+    networkConfig = {
+      IPv6AcceptRA = "yes";
+      LinkLocalAddressing = "yes";
+    };
+    # linkConfig.Unmanaged = "yes";
+  };
+  /*systemd.network.links."90-wlan0-selfmanaged" = {
+    linkConfig.Unmanaged = "yes";
+    matchConfig.Name = "wlan0";
+  };*/
+
   services.resolved.dnssec = "false";
 
-  services.emacs.package = pkgs.emacsPgtkGcc;
+  services.emacs.package = pkgs.emacsPgtk;
   services.emacs.enable = true;
   services.hostapd = {
     enable = false;
@@ -201,8 +220,10 @@
   systemd.tmpfiles.rules = [
     "d /var/lib/hawck-input/ 770 hawck-input hawck-input-share"
     "d /var/lib/hawck-input/keys 750 hawck-input hawck-input-share"
+    "d /var/lib/xilinx 770 tny wheel"
   ];
 
+  services.hardware.bolt.enable = true;
   services.ratbagd.enable = true;
   programs.steam.enable = true;
   programs.steam.remotePlay.openFirewall = true;
@@ -232,11 +253,11 @@
 
   services.corefreq.enable = true;
   environment.systemPackages = with pkgs; [
-    hawck
+    # hawck
     rocminfo
-    fahcontrol
-    fahviewer
-    manpages
+    # fahcontrol
+    # fahviewer
+    man-pages
     dmidecode
     efibootmgr
     firefox-wayland
@@ -254,6 +275,8 @@
     swtpm-tpm2
     tpm2-tools
     virt-manager
+
+    sbctl
   ];
 
   programs.adb.enable = true;
@@ -278,6 +301,10 @@
       add = true;
     };
   };
+
+
+  location.provider = "geoclue2";
+  services.geoclue2.enable = true;
 
   services.earlyoom.enable = true;
   # networking.

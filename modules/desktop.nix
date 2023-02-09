@@ -119,10 +119,10 @@
 
 
   boot.kernelParams = [
-    "video=DP-2:2560x1440@120"
+    "video=DP-3:2560x1440@120"
     "video=efifb:off"
     # disable secondary display until bootup
-    # "video=DP-1:d"
+    "video=DP-1:d"
   ];
   systemd.services.enable-display = {
     wantedBy = [ "multi-user.target" ];
@@ -149,7 +149,7 @@
 
       ExecStop = pkgs.writeShellScript "display-disable.sh" ''
         CARD="0"
-        INPUT="DP-2"
+        INPUT="DP-1"
 
         STATUS_PATH="/sys/class/drm/card$CARD-$INPUT/status"
         HOTPLUG_PATH="/sys/kernel/debug/dri/$CARD/$INPUT/trigger_hotplug"

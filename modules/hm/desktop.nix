@@ -59,7 +59,7 @@ let
 
       output = {
         # L
-        "DP-2" = {
+        "DP-3" = {
           position = "0 0";
           mode = "2560x1440@119.998Hz";
           enable = "";
@@ -67,7 +67,8 @@ let
         # R
         "DP-1" = {
           position = "2560 0";
-          mode = "1920x1200@59.950Hz";
+          mode = "3840x2160@59.997Hz";
+	  scale = "1.5";
           enable = "";
         };
         # headset
@@ -79,7 +80,7 @@ let
 
       input = {
         "1386:770:Wacom_Intuos_PT_S_Pen" = {
-          map_to_output = "DP-2";
+          map_to_output = "DP-1";
           map_from_region = "0.0x0.0 0.203x0.267";
         };
       };
@@ -91,10 +92,10 @@ let
       };
 
       workspaceOutputAssign = [
-        { workspace = "1: web"; output = "DP-2"; }
-        { workspace = "2: dev"; output = "DP-2"; }
-        { workspace = "3"; output = "DP-2"; }
-        { workspace = "4"; output = "DP-2"; }
+        { workspace = "1: web"; output = "DP-3"; }
+        { workspace = "2: dev"; output = "DP-3"; }
+        { workspace = "3"; output = "DP-3"; }
+        { workspace = "4"; output = "DP-3"; }
         { workspace = "5: chat"; output = "DP-1"; }
       ];
 
@@ -125,6 +126,15 @@ let
 in
 {
   wayland.windowManager.sway = wl-config;
+
+  services.gammastep.provider = "geoclue2";
+
+  services.gammastep.enable = true;
+  services.gammastep.settings = {
+    general = {
+      adjustment-method = "wayland";
+    };
+  };
 
   home.packages = with pkgs; [
     qt5ct

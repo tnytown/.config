@@ -1,5 +1,5 @@
 (final: prev: rec {
-  libtpms = prev.libtpms.overrideAttrs (o: rec {
+  /*libtpms = prev.libtpms.overrideAttrs (o: rec {
     version = "0.8.6";
     src = prev.fetchFromGitHub {
       owner = "stefanberger";
@@ -7,14 +7,14 @@
       rev = "v${version}";
       hash = "sha256-XvugcpoFQhdCBBg7hOgsUzSn4ad7RUuAEkvyiPLg4Lw=";
     };
-  });
+  });*/
   OVMF = (prev.OVMF.override ({ secureBoot = true; })).overrideAttrs (o: {
     buildFlags = o.buildFlags ++ [
       "-DTPM_ENABLE=TRUE"
       "-DTPM_CONFIG_ENABLE=TRUE"
     ];
   });
-
+  /*
   swtpm = prev.swtpm.overrideAttrs (o: rec {
     version = "1860183c42a0d43b444cb8cf3aae71de4ed0b601";
     nativeBuildInputs = o.nativeBuildInputs ++ [ prev.python3 prev.makeWrapper ];
@@ -35,7 +35,7 @@
     postInstall = ''
       wrapProgram $out/share/swtpm/swtpm-localca --prefix PATH : ${prev.lib.makeBinPath [ prev.gnutls ]}
     '';
-  });
+  });*/
   factorio = prev.factorio.overrideAttrs (o: rec {
     version = "1.1.36";
     name = "factorio-${version}";
@@ -45,7 +45,7 @@
       sha256 = "sha256-iPPHSYCGo4g1UY6pCgi+wEtIQF9sodcp5gqvbzYVKvU=";
     };
   });
-  flashrom = prev.flashrom.overrideAttrs (o: {
+  /*flashrom = prev.flashrom.overrideAttrs (o: {
     version = "git";
     nativeBuildInputs = o.nativeBuildInputs ++ [ prev.git prev.cmocka ];
     # NB: getrevision.sh is excluded with gitattributes.
@@ -55,7 +55,7 @@
       rev = "32f4cb4ffa2854354f00e5facc9ccb8c9beafd61";
       sha256 = "sha256-C7LcZwZtzg4BEzwzcn/O6Dj8fss2/KGIQMfoH6ewhqw=";
     };
-  });
+  });*/
 
   minecraft-server-fabric = prev.callPackage ./minecraft-server-fabric { };
 
@@ -222,7 +222,7 @@
     ];
   });
 
-  obs-studio = prev.obs-studio.overrideAttrs (_: rec {
+  /*obs-studio = prev.obs-studio.overrideAttrs (_: rec {
     version = "27.0.0-rc2";
     src = prev.fetchFromGitHub {
       owner = "obsproject";
@@ -231,13 +231,13 @@
       sha256 = "sha256-obmTdR7Ip3gY6q2PMKArPisnschdPt6vsj7VC7EHRiw=";
       fetchSubmodules = true;
     };
-  });
+  });*/
 
   shotcut = prev.shotcut.overrideAttrs (o: rec {
     buildInputs = o.buildInputs ++ [ prev.mlt ];
   });
 
-  wlgreet = prev.greetd.wlgreet.overrideAttrs (_: rec {
+  /*wlgreet = prev.greetd.wlgreet.overrideAttrs (_: rec {
     version = "2366f870440fe9ab9dd5270edc47ec54ee24ff5d";
     src = prev.fetchFromSourcehut {
       owner = "~kennylevinsen";
@@ -256,7 +256,10 @@
       rev = "0467c1e03a5780ed8e3ba611f099a838822ab550";
       sha256 = "sha256-5hUBJhc2PWzMv5gXc6SayDTZJVAFrXAYAqNaWETRfoc=";
     };
-  });
+  });*/
+
+
+  wlgreet = prev.greetd.wlgreet;
 
   linuxPackagesOverride = linuxPackages:
     linuxPackages.extend (lfinal: lprev: {

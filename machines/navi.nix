@@ -9,9 +9,23 @@
     ];
 
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "usbhid" "usb_storage" "sd_mod" ];
-  boot.initrd.kernelModules = [ ];
+  boot.initrd.kernelModules = [ "thunderbolt" ]; # thunderbolt on boot
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
+
+  boot.kernelParams = [
+    "amd_iommu=on" # vfio: should be enabled by default, paranoia
+    "iommu=pt" # vfio: passthru
+    "pci=realloc,assign-busses,hpbussize=0x33" # pcie: allocate hotplug bus numbers for thunderbolt
+  ];
+  hardware.cpu.amd.updateMicrocode = true;
+
+  # thunderbolt: automatically authorize all devices in initramfs
+  boot.initrd.extraUdevRulesCommands = ''
+    cat <<EOF >$out/99-thunderbolt.rules
+    ACTION=="add", SUBSYSTEM=="thunderbolt", ATTR{authorized}=="0", ATTR{authorized}="1"
+    EOF
+  '';
 
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/3bc40ef1-581f-4674-baa3-6c74b33b0f14";

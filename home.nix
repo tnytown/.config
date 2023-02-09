@@ -12,8 +12,7 @@
   # the Home Manager release notes for a list of state version
   # changes in each release.
   home.stateVersion = lib.mkForce "21.03"; # wtf?
-
-  nixpkgs.config.allowUnfree = true;
+ 
   home.packages = [
     pkgs.zsh
     pkgs.neofetch
@@ -38,6 +37,7 @@
     pkgs.python3Packages.binwalk
   ] ++ (if pkgs.stdenv.isLinux then [
     # pkgs.jetbrains.idea-ultimate
+    pkgs.signal-desktop
     pkgs.osu-lazer
     pkgs.rnnoise-plugin
     pkgs.obsidian
@@ -45,7 +45,7 @@
     (pkgs.cadence.override { libjack2 = pkgs.pipewire.jack; })
     pkgs.guitarix
 
-    (
+    /*(
       (pkgs.multimc.overrideAttrs (o: {
         postInstall = o.postInstall + ''
             wrapProgram $out/bin/multimc --prefix PATH : ${lib.makeBinPath [
@@ -56,7 +56,8 @@
             ]}
         '';
       }))
-    )
+    )*/
+    pkgs.prismlauncher
 
     pkgs.hledger
     pkgs.ledger-autosync
@@ -98,7 +99,7 @@
   ] else [ ]);
 
   xdg.dataFile = lib.mkIf pkgs.stdenv.isLinux {
-    "hawck/scripts/LLib".source = "${pkgs.hawck}/share/hawck/LLib";
+    # "hawck/scripts/LLib".source = "${pkgs.hawck}/share/hawck/LLib";
   };
 
   programs.obs-studio = {

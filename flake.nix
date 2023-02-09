@@ -14,11 +14,13 @@
     nixpkgs-overlay.inputs.nixpkgs.follows = "nixpkgs";
 
     emacs.url = "github:nix-community/emacs-overlay";
-    sops-nix.url = "github:knownunown/sops-nix/age-support";
+    sops-nix.url = "/home/tny/dev/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
     rocm.url = "github:nixos-rocm/nixos-rocm";
     rocm.inputs.nixpkgs.follows = "nixpkgs";
+
+    lanzaboote.url = "github:nix-community/lanzaboote";
 
     home-manager.url = "github:nix-community/home-manager/master";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
@@ -71,6 +73,7 @@
         intree = (import ./overlays/overlays.nix);
         tny = nixpkgs-overlay.overlay;
       };
+      overlaysList = lib.mapAttrsToList (s: t: t) overlays;
     in
     flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ]
       (system:
@@ -100,7 +103,8 @@
               config.allowUnfree = true;
             });
           in
-          (lpkgs // overlays.intree lpkgs lpkgs);
+          builtins.foldl' (l: r: r legacyPackages l) lpkgs overlaysList;
+          # (lpkgs // overlays.intree lpkgs lpkgs);
       }) // rec {
       inherit overlays;
       overlaysList = lib.mapAttrsToList (s: t: t) overlays;
@@ -108,12 +112,22 @@
       # this is factored out to account for the disparate home directory locations that I deal with,
       # namely macOS's /Users vs traditionally Linux's /home.
       homeConfiguration = { system, config, homeDirectory, username ? "tny", extraImports ? [ ] }:
-        home-manager.lib.homeManagerConfiguration {
-          inherit system homeDirectory username;
-          configuration = {
+        home-manager.lib.homeManagerConfiguration { 
+	  pkgs = nixpkgs.legacyPackages.${system};
+ 	  modules = [
+            ./home.nix
+            {
+              nixpkgs.config.allowUnfreePredicate = (pkg: true);
+              nixpkgs.overlays = overlaysList;
+              home = {
+                inherit username homeDirectory;
+              };
+            }
+          ] ++ extraImports;
+          /*configuration = {
             nixpkgs.overlays = overlaysList;
             imports = [ ./home.nix ] ++ extraImports;
-          };
+          };*/
         };
 
       machines = {
@@ -130,32 +144,35 @@
               # cachix
               (import cachix)
               {
-                cachix = [
-                  {
-                    name = "nixos-rocm";
-                    sha256 =
-                      "1l2g8l55b6jzb84m2dcpf532rm7p2g4dl56j3pbrfm03j54sg0v0";
-                  }
+                cachix = [ 
                   {
                     name = "nix-community";
                     sha256 =
-                      "00lpx4znr4dd0cc4w4q8fl97bdp7q19z1d3p50hcfxy26jz5g21g";
+                      "sha256:1rgbl9hzmpi5x2xx9777sf6jamz5b9qg72hkdn1vnhyqcy008xwg";
                   }
                 ];
               }
               {
-                nixpkgs.overlays = self.overlaysList
-                ++ [ (import rocm) inputs.emacs.overlay ];
+                nixpkgs.overlays = [ inputs.emacs.overlay ] ++ self.overlaysList;
               }
 
               ./configuration.nix
               ./machines/navi.nix
+              (inputs.lanzaboote.nixosModules.lanzaboote)
+	      ({ config, lib, ... }: {
+                         boot.loader.systemd-boot.enable = lib.mkForce false;
+
+        boot.lanzaboote = {
+          enable = true;
+          pkiBundle = "/etc/secureboot";
+        }; 
+              })
               ./modules/security.nix
               ./modules/initrd-ssh-luks.nix
               ./modules/corefreq.nix
               ./modules/desktop.nix
-              ./modules/jenkins-agent.nix
-              ./modules/minecraft-server.nix
+              # ./modules/jenkins-agent.nix
+              # ./modules/minecraft-server.nix
               sops-nix.nixosModules.sops
 
               inputs.fishcgi.nixosModule
@@ -208,6 +225,10 @@
                 };
                 boot.loader.grub.device = "/dev/vda";
               }
+
+              ./modules/security.nix
+              ./modules/vsftpd.nix
+              sops-nix.nixosModules.sops
               speedy.nixosModule
               inputs.mhctf.nixosModule
 
