@@ -17,6 +17,10 @@
       "argo.acm" = {
         user = "andrew";
       };
+      "*.cselabs" = {
+        user = "pan00111";
+        hostname = "csel-%h.umn.edu";
+      };
     };
     controlMaster = "auto";
     controlPersist = "10m";

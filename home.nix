@@ -34,8 +34,13 @@
 
     pkgs.ffmpeg
     pkgs.exiftool
-    pkgs.python3Packages.binwalk
-  ] ++ (if pkgs.stdenv.isLinux then [
+    pkgs.python3Packages.binwalk 
+  ] ++
+  (with pkgs; [
+    racket
+    emacsMacport
+  ])
+  ++ (if pkgs.stdenv.isLinux then [
     # pkgs.jetbrains.idea-ultimate
     pkgs.signal-desktop
     pkgs.osu-lazer
@@ -163,9 +168,11 @@
 
   programs.bash.enable = true;
   programs.bash.initExtra = ''[[ ! "$0" = "bash" ]] && exec fish'';
-  programs.zsh.enable = true;
-  programs.zsh.initExtra = ''[[ ! "$0" = "zsh" ]] && exec fish'';
-
+  programs.zsh.enable = true; 
+  programs.zsh.initExtra = ''
+    # eval $(/opt/homebrew/bin/brew shellenv)
+    [[ "$0" == '-zsh' ]] && exec fish
+  '';
 
   programs.fish.enable = true;
   programs.fish.interactiveShellInit = ''
