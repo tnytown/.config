@@ -1,0 +1,39 @@
+#!/usr/bin/env sh
+
+set -euo pipefail
+
+system_attr() {
+  if [[ $(uname -s) = "Darwin" ]]; then
+    echo "darwinConfigurations.$(hostname -s).config.system.build.toplevel"
+  else
+    echo "nixosConfigurations.$(hostname -s).config.system.build.toplevel"
+  fi
+}
+
+# special Nix invocation necessary for non-Flake systems.
+nix() {
+  /nix/var/nix/profiles/default/bin/nix --extra-experimental-features 'flakes nix-command' $@
+}
+
+os_specific_setup() {
+  [[ $(uname -s) = "Darwin" ]] || return
+  printf "run\tprivate/var/run\n" | sudo tee -a /etc/synthetic.conf
+  /System/Library/Filesystems/apfs.fs/Contents/Resources/apfs.util -t || true
+}
+
+# bootstrap and activates an initial Flake generation if necessary.
+# /usr/bin/env which nix >/dev/null && exit
+
+# curl -L https://nixos.org/nix/install | sh
+os_specific_setup
+
+nix -L build $(pwd)#$(system_attr)
+
+sudo mv /etc/nix/nix.conf{,.old} &>/dev/null || true
+sudo result/activate || true
+result/activate-user || true
+
+nix -L build $(pwd)#"homeConfigurations.$(hostname -s).activationPackage" && result/activate
+
+echo "==="
+echo "Restart shell to apply \$PATH!"

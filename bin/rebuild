@@ -1,0 +1,43 @@
+#!/usr/bin/env sh
+
+BASEDIR=$(dirname $(realpath $(which "$0")))"/../"
+
+wasTypeSpecified=""
+rebuildHome=""
+rebuildSystem=""
+
+while [ $# -gt 0 ]; do
+  i=$1; shift 1
+  case $i in
+  --home|-h)
+    wasTypeSpecified=1
+    rebuildHome=1
+    ;;
+  --system|-s)
+    wasTypeSpecified=1
+    rebuildSystem=1
+    ;;
+  --)
+    break
+    ;;
+  *)
+    echo "$0: unknown option '$i'"
+    exit 1
+    ;;
+  esac
+done
+
+if [ -z "$wasTypeSpecified" ]; then
+  rebuildHome=1
+  rebuildSystem=1
+fi
+
+SYSTEM_REBUILD='nixos-rebuild'
+[[ "$(uname -s)" = "Darwin" ]] && SYSTEM_REBUILD='darwin-rebuild'
+if [ -n "$rebuildSystem" ]; then
+   $SYSTEM_REBUILD switch $@ --flake "$BASEDIR"
+fi
+
+if [ -n "$rebuildHome" ]; then
+  home-manager switch $@ --flake "$BASEDIR#$(hostname -s)"
+fi
